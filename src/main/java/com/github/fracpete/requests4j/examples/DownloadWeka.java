@@ -36,9 +36,11 @@ public class DownloadWeka {
     Response r = Requests.get("http://sourceforge.net/projects/weka/files/weka-3-9/3.9.3/weka-3-9-3.zip/download")
       .allowRedirects(true)
       .execute();
-    File download = new File(System.getProperty("java.io.tmpdir") + File.separator + "weka-3-9-3.zip");
     System.out.println(r);
-    System.out.println("Saving to " + download);
-    r.saveBody(download);
+    if (r.ok()) {
+      File download = new File(System.getProperty("java.io.tmpdir") + File.separator + "weka-3-9-3.zip");
+      System.out.println("Saving to " + download);
+      r.saveBody(download);
+    }
   }
 }
