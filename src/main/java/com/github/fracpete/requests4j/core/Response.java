@@ -5,8 +5,12 @@
 
 package com.github.fracpete.requests4j.core;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 
 /**
  * Encapsulates a response from a request.
@@ -95,6 +99,26 @@ public class Response
    */
   public String text(String encoding) throws UnsupportedEncodingException {
     return new String(m_Body, encoding);
+  }
+
+  /**
+   * Writes the received body bytes to the specified file.
+   *
+   * @param filename	the file to write to
+   * @throws IOException	if writing fails
+   */
+  public void saveBody(String filename) throws IOException {
+    saveBody(new File(filename));
+  }
+
+  /**
+   * Writes the received body bytes to the specified file.
+   *
+   * @param file	the file to write to
+   * @throws IOException	if writing fails
+   */
+  public void saveBody(File file) throws IOException {
+    Files.write(file.toPath(), m_Body, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
   }
 
   /**
