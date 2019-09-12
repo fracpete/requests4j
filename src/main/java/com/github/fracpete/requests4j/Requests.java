@@ -10,6 +10,13 @@ import com.github.fracpete.requests4j.core.Request;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import static com.github.fracpete.requests4j.core.Method.DELETE;
+import static com.github.fracpete.requests4j.core.Method.GET;
+import static com.github.fracpete.requests4j.core.Method.HEAD;
+import static com.github.fracpete.requests4j.core.Method.PATCH;
+import static com.github.fracpete.requests4j.core.Method.POST;
+import static com.github.fracpete.requests4j.core.Method.PUT;
+
 /**
  * Main class for generating new requests.
  *
@@ -23,7 +30,7 @@ public class Requests {
    * @return		the request
    */
   public static Request get() {
-    return new Request("GET");
+    return new Request(GET);
   }
 
   /**
@@ -52,7 +59,7 @@ public class Requests {
    * @return		the request
    */
   public static Request post() {
-    return new Request("POST");
+    return new Request(POST);
   }
 
   /**
@@ -81,7 +88,7 @@ public class Requests {
    * @return		the request
    */
   public static Request put() {
-    return new Request("PUT");
+    return new Request(PUT);
   }
 
   /**
@@ -110,7 +117,7 @@ public class Requests {
    * @return		the request
    */
   public static Request patch() {
-    return new Request("PATCH");
+    return new Request(PATCH);
   }
 
   /**
@@ -139,7 +146,7 @@ public class Requests {
    * @return		the request
    */
   public static Request head() {
-    return new Request("HEAD");
+    return new Request(HEAD);
   }
 
   /**
@@ -168,7 +175,7 @@ public class Requests {
    * @return		the request
    */
   public static Request delete() {
-    return new Request("DELETE");
+    return new Request(DELETE);
   }
 
   /**

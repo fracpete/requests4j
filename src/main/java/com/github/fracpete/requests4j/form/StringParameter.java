@@ -23,6 +23,8 @@ package com.github.fracpete.requests4j.form;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Encapsulates string parameters.
@@ -64,12 +66,26 @@ public class StringParameter
    * @throws IOException	if writing fails
    */
   @Override
-  public void write(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException {
+  public void post(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException {
     writer.write("--" + boundary + "\r\n");
     writer.write("Content-Disposition: form-data; name=\"" + name() + "\"\r\n");
     writer.write("\r\n");
     writer.write(value());
     writer.write("\r\n");
+  }
+
+  /**
+   * Collects the parameters.
+   *
+   * @return 		the parameters
+   */
+  public Map<String,String> parameters() {
+    Map<String,String>  result;
+
+    result = new HashMap<>();
+    result.put(name(), value());
+
+    return result;
   }
 
   /**

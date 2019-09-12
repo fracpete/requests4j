@@ -103,11 +103,26 @@ public class FormData
    * @param boundary 	the boundary to use
    * @throws IOException	if writing fails
    */
-  public void write(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException {
+  public void post(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException {
     if (size() > 0) {
       writer.write("\n\n");
       for (String key : keySet())
-	get(key).write(conn, writer, boundary);
+	get(key).post(conn, writer, boundary);
     }
+  }
+
+  /**
+   * Collects the parameters.
+   *
+   * @return 		the parameters
+   */
+  public Map<String,String> parameters() {
+    Map<String,String> 	result;
+
+    result = new HashMap<>();
+      for (String key : keySet())
+	result.putAll(get(key).parameters());
+
+    return result;
   }
 }

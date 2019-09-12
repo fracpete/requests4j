@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.util.Map;
 
 /**
  * Encapsulates stream parameters.
@@ -134,7 +135,7 @@ public class StreamParameter
    * @throws IOException	if writing fails
    */
   @Override
-  public void write(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException {
+  public void post(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException {
     OutputStream 	os;
     int 		read;
     byte[] 		buffer;
@@ -152,6 +153,15 @@ public class StreamParameter
     os.flush();
 
     stream().close();
+  }
+
+  /**
+   * Collects the parameters.
+   *
+   * @return 		the parameters
+   */
+  public Map<String,String> parameters() {
+    throw new IllegalStateException("File/Stream parameter only supports POST, not GET!");
   }
 
   /**

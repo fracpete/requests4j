@@ -12,6 +12,7 @@ import gnu.trove.list.TByteList;
 import gnu.trove.list.array.TByteArrayList;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
@@ -23,6 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import static com.github.fracpete.requests4j.core.Method.POST;
+
 /**
  * Encapsulates a request.
  *
@@ -32,7 +35,7 @@ public class Request
   implements Serializable {
 
   /** the method. */
-  protected String m_Method;
+  protected Method m_Method;
 
   /** the URL to contact. */
   protected URL m_URL;
@@ -58,12 +61,18 @@ public class Request
   /** the read timeout (msec), default if < 0. */
   protected int m_ReadTimeout;
 
+  /** whether to allow redirects. */
+  protected boolean m_AllowRedirects;
+
+  /** the maximum number of redirects. */
+  protected int m_MaxRedirects;
+
   /**
    * Initializes the request.
    *
    * @param method	the method to use
    */
-  public Request(String method) {
+  public Request(Method method) {
     m_Method            = method;
     m_URL               = null;
     m_Headers           = new HashMap<>();
@@ -73,6 +82,8 @@ public class Request
     m_FormData          = new FormData();
     m_ConnectionTimeout = -1;
     m_ReadTimeout       = -1;
+    m_AllowRedirects    = false;
+    m_MaxRedirects      = 3;
   }
 
   /**
@@ -80,7 +91,7 @@ public class Request
    *
    * @return		the method
    */
-  public String method() {
+  public Method method() {
     return m_Method;
   }
 
@@ -308,6 +319,48 @@ public class Request
   }
 
   /**
+   * Returns whether to allow redirects (3xx).
+   *
+   * @param allow	true if to allow
+   * @return		itself
+   */
+  public Request allowRedirects(boolean allow) {
+    m_AllowRedirects = allow;
+    return this;
+  }
+
+  /**
+   * Returns whether redirects are allowed.
+   *
+   * @return		true if allowed
+   */
+  public boolean allowRedirects() {
+    return m_AllowRedirects;
+  }
+
+  /**
+   * Sets the maximum number of redirects to follow.
+   *
+   * @param max		the maximum
+   * @return		itself
+   */
+  public Request maxRedirects(int max) {
+    if (max < 0)
+      max = 0;
+    m_MaxRedirects = max;
+    return this;
+  }
+
+  /**
+   * Returns the maximum number of redirects to follow.
+   *
+   * @return		the maximum
+   */
+  public int maxRedirects() {
+    return m_MaxRedirects;
+  }
+
+  /**
    * Assembles the full URL.
    *
    * @return		the URL
@@ -315,22 +368,30 @@ public class Request
    */
   protected URL assembleURL() throws Exception {
     URL 		result;
+    Map<String,String>	params;
     StringBuilder	url;
     int			i;
     String		enc;
 
-    if (m_Parameters.size() > 0) {
+    // collect parameters for URL
+    params = new HashMap<>();
+    if (m_Method != POST) {
+      params.putAll(m_Parameters);
+      params.putAll(formData().parameters());
+    }
+
+    if (params.size() > 0) {
       enc = "UTF-8";
       url = new StringBuilder(m_URL.toString());
       i   = 0;
-      for (String key: m_Parameters.keySet()) {
+      for (String key: params.keySet()) {
         if (i == 0)
           url.append("?");
         else
           url.append("&");
         url.append(URLEncoder.encode(key, enc));
         url.append("=");
-        url.append(URLEncoder.encode(m_Parameters.get(key), enc));
+        url.append(URLEncoder.encode(params.get(key), enc));
         i++;
       }
       result = new URL(url.toString());
@@ -358,6 +419,82 @@ public class Request
   }
 
   /**
+   * Opens the connection.
+   *
+   * @param url		the URL to use
+   * @return		the connection
+   * @throws IOException	if connection fails
+   */
+  protected HttpURLConnection openConnection(URL url) throws IOException {
+    HttpURLConnection 	result;
+    BufferedWriter	writer;
+    String		boundary;
+
+    result = (HttpURLConnection) url.openConnection();
+    if (m_ConnectionTimeout >= 0)
+      result.setConnectTimeout(m_ConnectionTimeout);
+    if (m_ReadTimeout >= 0)
+      result.setReadTimeout(m_ReadTimeout);
+    result.setDoInput(true);
+    result.setDoOutput(true);
+    result.setRequestMethod(m_Method.toString());
+    for (String key: m_Headers.keySet())
+      result.setRequestProperty(key, m_Headers.get(key));
+    for (String key: m_Cookies.keySet())
+      result.setRequestProperty(key, m_Cookies.get(key));
+
+    if (m_Method == POST) {
+      if (m_FormData.size() > 0) {
+	boundary = createBoundary();
+	result.addRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+	writer = new BufferedWriter(new OutputStreamWriter(result.getOutputStream()));
+	m_FormData.post(result, writer, boundary);
+	writer.close();
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Gets the connection, handles redirects.
+   *
+   * @param url		the URL to open
+   * @return		the connection
+   * @throws IOException        if opening fails
+   */
+  protected HttpURLConnection getConnection(URL url) throws IOException {
+    HttpURLConnection 	result;
+    int 		status;
+    String 		newURL;
+    int 		redirectCount;
+
+    result = openConnection(url);
+
+    status        = result.getResponseCode();
+    redirectCount = 0;
+
+    while ((status == HttpURLConnection.HTTP_MOVED_TEMP)
+      || (status == HttpURLConnection.HTTP_MOVED_PERM)
+      || (status == HttpURLConnection.HTTP_SEE_OTHER)) {
+
+      if (!m_AllowRedirects)
+	throw new IOException("Received a redirect and no redirects allowed!");
+
+      redirectCount++;
+      if (redirectCount >= m_MaxRedirects)
+	throw new IOException(m_MaxRedirects + " redirects were generated when trying to access " + url);
+
+      newURL = result.getHeaderField("Location");
+      System.out.println("Redirect, trying to open: " + newURL);
+      result = openConnection(new URL(newURL));
+      status = result.getResponseCode();
+    }
+
+    return result;
+  }
+
+  /**
    * Executes the request.
    *
    * @return		the generated response
@@ -367,50 +504,23 @@ public class Request
     Response		result;
     HttpURLConnection	conn;
     URL 		url;
-    BufferedWriter	writer;
     InputStream		in;
     TByteList		content;
     int			b;
-    String		boundary;
 
     if (m_URL == null)
       throw new IllegalStateException("No URL provided!");
 
-    // assemble URL
-    url = assembleURL();
-
-    // apply authentiation
     m_Authentication.apply(this);
+    url  = assembleURL();
+    conn = getConnection(url);
 
-    // write request
-    conn = (HttpURLConnection) url.openConnection();
-    if (m_ConnectionTimeout >= 0)
-      conn.setConnectTimeout(m_ConnectionTimeout);
-    if (m_ReadTimeout >= 0)
-      conn.setReadTimeout(m_ReadTimeout);
-    conn.setDoInput(true);
-    conn.setDoOutput(true);
-    conn.setRequestMethod(m_Method);
-    for (String key: m_Headers.keySet())
-      conn.setRequestProperty(key, m_Headers.get(key));
-    for (String key: m_Cookies.keySet())
-      conn.setRequestProperty(key, m_Cookies.get(key));
-
-    if (m_FormData.size() > 0) {
-      boundary = createBoundary();
-      conn.addRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
-      writer = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
-      m_FormData.write(conn, writer, boundary);
-      writer.close();
-    }
-
-    // response
     in = conn.getInputStream();
     content = new TByteArrayList();
     while ((b = in.read()) != -1)
       content.add((byte) b);
 
-    result = new Response(conn.getResponseCode(), conn.getResponseMessage(), content.toArray());
+    result = new Response(conn.getResponseCode(), conn.getResponseMessage(), content.toArray(), conn.getHeaderFields());
 
     conn.disconnect();
 

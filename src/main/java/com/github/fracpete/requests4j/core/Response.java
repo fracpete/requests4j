@@ -11,6 +11,9 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Encapsulates a response from a request.
@@ -29,13 +32,18 @@ public class Response
   /** the content. */
   protected byte[] m_Body;
 
+  /** the headers. */
+  protected Map<String,List<String>> m_Headers;
+
   /**
    * Initializes the response.
    *
    * @param statusCode	the HTTP code
+   * @param statusMessage 	the HTTP status message
    * @param body	the body
+   * @param headers 	the HTTP headers
    */
-  public Response(int statusCode, String statusMessage, byte[] body) {
+  public Response(int statusCode, String statusMessage, byte[] body, Map<String,List<String>> headers) {
     if (body == null)
       body = new byte[0];
     if (statusMessage == null)
@@ -44,6 +52,7 @@ public class Response
     m_StatusCode    = statusCode;
     m_StatusMessage = statusMessage;
     m_Body          = body;
+    m_Headers       = new HashMap<>(headers);
   }
 
   /**
@@ -62,6 +71,15 @@ public class Response
    */
   public String statusMessage() {
     return m_StatusMessage;
+  }
+
+  /**
+   * Returns the headers.
+   *
+   * @return		the headers
+   */
+  public Map<String,List<String>> headers() {
+    return m_Headers;
   }
 
   /**
@@ -128,6 +146,6 @@ public class Response
    */
   @Override
   public String toString() {
-    return "status code: " + statusCode() + ", status message: " + statusMessage() + ", body length: " + body().length;
+    return "status code: " + statusCode() + ", status message: " + statusMessage() + ", body length: " + body().length + ", headers: " + headers();
   }
 }

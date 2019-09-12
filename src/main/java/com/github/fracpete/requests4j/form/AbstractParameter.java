@@ -23,6 +23,7 @@ package com.github.fracpete.requests4j.form;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.Map;
 
 /**
  * Ancestor for Files parameters.
@@ -60,7 +61,14 @@ public abstract class AbstractParameter {
    * @param boundary 	the boundary to use
    * @throws IOException	if writing fails
    */
-  public abstract void write(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException;
+  public abstract void post(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException;
+
+  /**
+   * Collects the parameters.
+   *
+   * @return 		the parameters
+   */
+  public abstract Map<String,String> parameters();
 
   /**
    * Returns a short description.
