@@ -1,2 +1,2 @@
 # requests4j
-HTTP for humans, inspired by the amazing Python requests library.
+HTTP for humans using Java, inspired by the amazing requests Python library.
