@@ -35,6 +35,9 @@ public class Response
   /** the headers. */
   protected Map<String,List<String>> m_Headers;
 
+  /** the cookies. */
+  protected Map<String,String> m_Cookies;
+
   /**
    * Initializes the response.
    *
@@ -53,6 +56,33 @@ public class Response
     m_StatusMessage = statusMessage;
     m_Body          = body;
     m_Headers       = new HashMap<>(headers);
+    initCookies();
+  }
+
+  /**
+   * Initializes the cookies from the headers.
+   */
+  protected void initCookies() {
+    List<String>	cookies;
+    String		name;
+    String		value;
+
+    m_Cookies = new HashMap<>();
+    cookies   = m_Headers.get("Set-Cookie");
+    if (cookies == null)
+      cookies = m_Headers.get("set-cookie");
+    if (cookies != null) {
+      for (String cookie: cookies) {
+        // remove expiry etc
+        if (cookie.contains(";"))
+	  cookie = cookie.substring(0, cookie.indexOf(";"));
+        if (cookie.contains("=")) {
+          name  = cookie.substring(0, cookie.indexOf("="));
+          value = cookie.substring(cookie.indexOf("=") + 1);
+          m_Cookies.put(name, value);
+	}
+      }
+    }
   }
 
   /**
@@ -80,6 +110,15 @@ public class Response
    */
   public Map<String,List<String>> headers() {
     return m_Headers;
+  }
+
+  /**
+   * Returns the received cookies ("Set-Cookie").
+   *
+   * @return		the cookies
+   */
+  public Map<String,String> cookies() {
+    return m_Cookies;
   }
 
   /**

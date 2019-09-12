@@ -34,7 +34,8 @@ public class ReadHtml {
     Response r = Requests.get("http://github.com/")
       .allowRedirects(true)
       .execute();
-    System.out.println(r);
+    System.out.println("Response: " + r);
+    System.out.println("Cookies: " + r.cookies());
     System.out.println(r.text());
   }
 }
