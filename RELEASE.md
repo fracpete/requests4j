@@ -1,5 +1,4 @@
-How to make a release
-=====================
+# How to make a release
 
 * Run the following command to deploy the artifact:
 
