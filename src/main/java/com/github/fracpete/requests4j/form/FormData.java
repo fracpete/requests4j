@@ -5,9 +5,12 @@
 
 package com.github.fracpete.requests4j.form;
 
+import org.apache.tika.mime.MediaType;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +53,7 @@ public class FormData
   /**
    * Adds the string form parameter.
    *
-   * @param name	the name
+   * @param name	the parameter name
    * @param value	the value
    * @return		itself
    */
@@ -59,9 +62,9 @@ public class FormData
   }
 
   /**
-   * Adds the file form parameter.
+   * Adds the file as form parameter.
    *
-   * @param name	the name
+   * @param name	the parameter name
    * @param filename	the file to add
    * @return		itself
    */
@@ -70,14 +73,40 @@ public class FormData
   }
 
   /**
-   * Adds the file form parameter.
+   * Adds the file as form parameter.
    *
-   * @param name	the name
+   * @param name	the parameter name
    * @param file	the file to add
    * @return		itself
    */
   public FormData addFile(String name, File file) throws IOException {
     return add(new StreamParameter(name, file));
+  }
+
+  /**
+   * Adds the stream as form parameter.
+   *
+   * @param name	the parameter name
+   * @param file	the file name to use for the stream
+   * @param mimetype 	the mimetype to use, eg {@link MediaType#OCTET_STREAM}
+   * @param stream 	the stream to read from
+   * @return		itself
+   */
+  public FormData addStream(String name, File file, MediaType mimetype, InputStream stream) throws IOException {
+    return add(new StreamParameter(name, file, mimetype, stream));
+  }
+
+  /**
+   * Adds the stream as form parameter.
+   *
+   * @param name	the parameter name
+   * @param filename	the file name to use for the stream
+   * @param mimetype 	the mimetype to use, eg {@link MediaType#OCTET_STREAM}
+   * @param stream 	the stream to read from
+   * @return		itself
+   */
+  public FormData addStream(String name, String filename, MediaType mimetype, InputStream stream) throws IOException {
+    return add(new StreamParameter(name, filename, mimetype, stream));
   }
 
   /**
