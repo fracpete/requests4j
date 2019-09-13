@@ -1,2 +1,158 @@
 # requests4j
-HTTP for humans using Java, inspired by the amazing requests Python library.
+*HTTP for humans* using Java, inspired by the amazing [requests Python library](https://2.python-requests.org/en/master/).
+Not as feature rich, but it gets a lot done.
+
+## Why yet another Java HTTP client library? 
+[JSoup](https://jsoup.org/) was missing some functionality that I needed and 
+the [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/)
+library seemed a bit too cumbersome to use. Instead, I reused functionality
+that I had written for my [ADAMS](https://adams.cms.waikato.ac.nz/) framework
+over the years and turned it into a separate library, taking
+the [requests](https://2.python-requests.org/en/master/) API as model to make
+this library easy to use.
+
+
+## Usage
+The following sections describe how to use the library.
+
+### Creating a request
+The following methods are supported through the `com.github.fracpete.requests4j.Requests` class:
+* GET -- `Requests.get()`
+* POST -- `Requests.post()`
+* PUT -- `Requests.put()`
+* PATCH -- `Requests.patch()`
+* HEAD -- `Requests.head()`
+* DELETE -- `Requests.delete()`
+
+The above mentioned methods can also take a URL string or a `java.net.URL` object,
+initializing the URL straight away. Otherwise, you need to set the URL via 
+the `url(String)` or `url(java.net.URL)` method. 
+
+Calling one the request methods will generate an instance of the `Request` 
+class (package `com.github.fracpete.requests4j.core`). This class supports
+daisy-chaining to make it easy to configure a full request with minimal code 
+to write.
+
+
+### Headers and parameters
+You can set custom HTTP headers using the following methods:
+* `header(String,String)` -- setting a single header, name and value
+* `headers(Map<String,String>)` -- setting multiple headers at once
+
+Similarly, you can set parameters, eg to be encoded in the URL for `GET` 
+requests, using the following methods:
+* `parameter(String,String)` -- setting a single parameter, name and value
+* `parameter(Map<String,String>)` -- setting multiple parameters at once
+
+
+### HTML forms
+Being able to upload data, be it simple parameters or files, is an important
+feature for a HTTP client library. In case of `GET`, you can only use simple
+parameters, as they get appended to the URL of the request. `POST`, on the
+other hand, makes use of the `multipart/form-data` content type, allowing
+you to upload files (or any binary data) as well.
+
+In order to make use of form data, you need to call the `formData(FormData)`
+method, with an instance of `FormData` (package `com.github.fracpete.requests4j.form`).
+The `FormData` class allows you to either add parameter objects (derived from `AbstractParameter`)
+or directly add simple parameters, files or input streams (eg a `java.io.ByteArrayInputStream` 
+if you have the data only in its binary form).
+
+The following example POSTs a file to the server with some credentials as part
+of the form data: 
+
+```java
+import com.github.fracpete.requests4j.Requests;
+import com.github.fracpete.requests4j.core.Response;
+import com.github.fracpete.requests4j.form.FormData;
+
+public class FormUpload {
+  public static void main(String[] args) throws Exception {
+    Response r = Requests.post("http://some.server.com/upload")
+      .formData(
+        new FormData()
+          .addFile("file", "/some/where/important.doc")
+          .add("user", "myuser")
+          .add("password", "mysecretpassword")
+      )
+      .execute();
+    System.out.printnl(r);
+  }
+}
+```
+
+
+### Execute and response
+Once fully configured, you can execute a request with the `execute()` method,
+which will either fail with an exception or return a `Response` object (package 
+`com.github.fracpete.requests4j.core`).
+
+With a `Response` object, you have access to:
+* HTTP status code -- `statusCode()`
+* HTTP status message -- `statusMessage()`
+* HTTP headers -- `headers()`
+* Cookies -- `cookies()` (parsed from the `Set-Cookie` headers)
+* the body of the response
+  * the raw byte array -- `body()`
+  * as (UTF-8) text -- `text()`
+  * as text using a custom encoding -- `text(String)`
+
+With the `saveBody` methods, you can save the binary response as is to the 
+supplied file.
+
+
+## Advanced usage
+### Authentication
+Some websites may require you to log in via password dialogs (eg Apache's htpasswd functionality).
+In that case, you can use `BasicAuthentication` to provide these credentials:
+
+```java
+import com.github.fracpete.requests4j.Requests;
+import com.github.fracpete.requests4j.auth.BasicAuthentication;
+import com.github.fracpete.requests4j.core.Response;
+
+public class Auth {
+  public static void main(String[] args) throws Exception {
+    Response r = Requests.get("http://some.server.com/")
+      .auth(new BasicAuthentication("USER", "PASSWORD"))
+      .execute();
+  }
+}
+```
+
+### Redirects
+Some websites, like sourceforge may perform redirects (eg from `http` to `https`).
+By default redirects are not allowed, but you can enable them using the 
+`allowRedirects(boolean)` method. With the `maxRedirects(int)` method you can 
+set the upper limit to the number of redirects to follow through (default is 3).
+
+The following example downloads a Weka zip file from sourceforge.net:
+
+```java
+public class Redirect {
+  public static void main(String[] args) throws Exception {
+    Response r = Requests.get("http://sourceforge.net/projects/weka/files/weka-3-9/3.9.3/weka-3-9-3.zip/download")
+      .allowRedirects(true)
+      .execute();
+  }
+}
+```
+
+
+## Examples
+
+* [DownloadWeka](src/main/java/com/github/fracpete/requests4j/examples/DownloadWeka.java) -- downloads 
+  a Weka zip file and saves it to disk
+* [ReadHtml](src/main/java/com/github/fracpete/requests4j/examples/ReadHtml.java) -- grabs the start
+  page of *github.com*, dumps it to standard out, next to the cookies it received. 
+ 
+
+## Maven
+Use the following dependency in your `pom.xml`:
+```xml
+    <dependency>
+      <groupId>com.github.fracpete</groupId>
+      <artifactId>requests4j</artifactId>
+      <version>0.0.1</version>
+    </dependency>
+```
