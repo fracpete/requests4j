@@ -6,26 +6,24 @@
 package com.github.fracpete.requests4j.examples;
 
 import com.github.fracpete.requests4j.Requests;
-import com.github.fracpete.requests4j.core.Response;
+import com.github.fracpete.requests4j.core.FileResponse;
 
 import java.io.File;
 
 /**
- * Downloads a Weka zip file from sourceforge.
+ * Downloads a Weka zip file from sourceforge, streams the response straight to
+ * the output file.
  *
  * @author FracPete (fracpete at waikato dot ac dot nz)
  */
 public class DownloadWeka {
 
   public static void main(String[] args) throws Exception {
-    Response r = Requests.get("http://sourceforge.net/projects/weka/files/weka-3-9/3.9.3/weka-3-9-3.zip/download")
+    FileResponse r = Requests.get("https://sourceforge.net/projects/weka/files/weka-3-9/3.9.3/weka-3-9-3.zip/download")
       .allowRedirects(true)
-      .execute();
+      .execute(new FileResponse(System.getProperty("java.io.tmpdir") + File.separator + "weka-3-9-3.zip", 1024*1024));
     System.out.println(r);
-    if (r.ok()) {
-      File download = new File(System.getProperty("java.io.tmpdir") + File.separator + "weka-3-9-3.zip");
-      System.out.println("Saving to " + download);
-      r.saveBody(download);
-    }
+    if (r.ok())
+      System.out.println("Saved to " + r.outputFile());
   }
 }

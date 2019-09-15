@@ -8,8 +8,6 @@ package com.github.fracpete.requests4j.core;
 import com.github.fracpete.requests4j.auth.AbstractAuthentication;
 import com.github.fracpete.requests4j.auth.NoAuthentication;
 import com.github.fracpete.requests4j.form.FormData;
-import gnu.trove.list.TByteList;
-import gnu.trove.list.array.TByteArrayList;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -537,17 +535,26 @@ public class Request
   }
 
   /**
-   * Executes the request.
+   * Executes the request and stores the response in memory.
    *
    * @return		the generated response
    * @throws Exception	if execution fails
    */
   public Response execute() throws Exception {
-    Response		result;
+    return execute(new Response());
+  }
+
+  /**
+   * Executes the request, uses the supplied response instance for receiving the data.
+   *
+   * @param response 	the configured response container to use
+   * @return		the generated response
+   * @throws Exception	if execution fails
+   */
+  public <T extends HttpResponse> T execute(T response) throws Exception {
     HttpURLConnection	conn;
     URL 		url;
     InputStream		in;
-    TByteList		content;
     int			b;
 
     if (m_URL == null)
@@ -557,15 +564,15 @@ public class Request
     url  = assembleURL();
     conn = getConnection(url);
 
-    in = conn.getInputStream();
-    content = new TByteArrayList();
-    while ((b = in.read()) != -1)
-      content.add((byte) b);
+    response.init(conn.getResponseCode(), conn.getResponseMessage(), conn.getHeaderFields());
 
-    result = new Response(conn.getResponseCode(), conn.getResponseMessage(), content.toArray(), conn.getHeaderFields());
+    in = conn.getInputStream();
+    while ((b = in.read()) != -1)
+      response.appendBody((byte) b);
+    response.finishBody();
 
     conn.disconnect();
 
-    return result;
+    return response;
   }
 }

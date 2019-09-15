@@ -97,11 +97,43 @@ With a `Response` object, you have access to:
   * as (UTF-8) text -- `text()`
   * as text using a custom encoding -- `text(String)`
 
-With the `saveBody` methods, you can save the binary response as is to the 
+With the `saveBody` methods, you can save the binary response data as is to the 
 supplied file.
 
 
 ## Advanced usage
+### Different response objects
+The `Response` object simply stores the received data in memory, which is fine
+for receiving HTML pages or small binary objects. However, for downloading
+large binary files, it is recommended to use one of the following response
+classes instead (package `com.github.fracpete.requests4j.core`):
+* `FileResponse` - streams the incoming data straight to the specified output file
+* `StreamResponse` - uses the supplied `java.io.OutputStream` to forward the incoming data to  
+
+Each of these classes implements the `HTTPResponse` interface that all response
+classes share, giving you access to the following methods:
+* HTTP status code -- `statusCode()`
+* HTTP status message -- `statusMessage()`
+* HTTP headers -- `headers()`
+* Cookies -- `cookies()` (parsed from the `Set-Cookie` headers)
+
+Instead of using the `execute()` method, you now use the `execute(HTTPResponse)` 
+method, supplying the fully configured response object. The following example
+shows how to download a remote ZIP file straight to a file:
+```java
+import com.github.fracpete.requests4j.Requests;
+import com.github.fracpete.requests4j.core.FileResponse;
+
+public class FileResponseDownload {
+  public static void main(String[] args) {
+    FileResponse r = Requests.get("http://some.server.com/largefile.zip")
+      .execute(new FileResponse("/some/where/largefile.zip"));
+    if (r.ok())
+      System.out.println("Saved to " + r.outputFile());
+  }
+}
+```
+
 ### Authentication
 Some websites may require you to log in via password dialogs (eg Apache's htpasswd functionality).
 In that case, you can use `BasicAuthentication` to provide these credentials:
@@ -141,10 +173,12 @@ public class Redirect {
 
 ## Examples
 
-* [DownloadWeka](src/main/java/com/github/fracpete/requests4j/examples/DownloadWeka.java) -- downloads 
-  a Weka zip file and saves it to disk
 * [ReadHtml](src/main/java/com/github/fracpete/requests4j/examples/ReadHtml.java) -- grabs the start
-  page of *github.com*, dumps it to standard out, next to the cookies it received. 
+  page of *github.com* (storing the response in memory), dumps it to standard out, next to the cookies it received. 
+* [DownloadWeka](src/main/java/com/github/fracpete/requests4j/examples/DownloadWeka.java) -- downloads 
+  a Weka zip file and streams the downloaded file straight to disk
+* [DownloadWekaAsStream](src/main/java/com/github/fracpete/requests4j/examples/DownloadWekaAsStream.java) -- downloads 
+  a Weka zip file to a supplied output stream.
  
 
 ## Maven

@@ -5,129 +5,57 @@
 
 package com.github.fracpete.requests4j.core;
 
+import gnu.trove.list.TByteList;
+import gnu.trove.list.array.TByteArrayList;
+
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Encapsulates a response from a request.
+ * Encapsulates a (in-memory) response from a request.
  *
  * @author FracPete (fracpete at waikato dot ac dot nz)
  */
 public class Response
-  implements Serializable {
+  extends AbstractResponse {
 
-  /** the status code. */
-  protected int m_StatusCode;
-
-  /** the status message. */
-  protected String m_StatusMessage;
-
-  /** the content. */
-  protected byte[] m_Body;
-
-  /** the headers. */
-  protected Map<String,List<String>> m_Headers;
-
-  /** the cookies. */
-  protected Map<String,String> m_Cookies;
+  /** the received content. */
+  protected TByteList m_Body;
 
   /**
-   * Initializes the response.
+   * Initializes the response object.
    *
-   * @param statusCode	the HTTP code
-   * @param statusMessage 	the HTTP status message
-   * @param body	the body
-   * @param headers 	the HTTP headers
+   * @param statusCode		the HTTP status code
+   * @param statusMessage	the HTTP status message
+   * @param headers		the received headers
    */
-  public Response(int statusCode, String statusMessage, byte[] body, Map<String,List<String>> headers) {
-    if (body == null)
-      body = new byte[0];
-    if (statusMessage == null)
-      statusMessage = "";
-
-    m_StatusCode    = statusCode;
-    m_StatusMessage = statusMessage;
-    m_Body          = body;
-    m_Headers       = new HashMap<>(headers);
-    initCookies();
+  @Override
+  public void init(int statusCode, String statusMessage, Map<String, List<String>> headers) {
+    super.init(statusCode, statusMessage, headers);
+    m_Body = new TByteArrayList();
   }
 
   /**
-   * Initializes the cookies from the headers.
+   * Appends the byte read from the response.
+   *
+   * @param b		the byte to append
+   * @throws IOException	if appending failed
    */
-  protected void initCookies() {
-    List<String>	cookies;
-    String		name;
-    String		value;
-
-    m_Cookies = new HashMap<>();
-    cookies   = m_Headers.get("Set-Cookie");
-    if (cookies == null)
-      cookies = m_Headers.get("set-cookie");
-    if (cookies != null) {
-      for (String cookie: cookies) {
-        // remove expiry etc
-        if (cookie.contains(";"))
-	  cookie = cookie.substring(0, cookie.indexOf(";"));
-        if (cookie.contains("=")) {
-          name  = cookie.substring(0, cookie.indexOf("="));
-          value = cookie.substring(cookie.indexOf("=") + 1);
-          m_Cookies.put(name, value);
-	}
-      }
-    }
+  public void appendBody(byte b) throws IOException {
+    m_Body.add(b);
   }
 
   /**
-   * Returns the HTTP status code.
+   * Called when all data from the response has been processed.
    *
-   * @return		the code
+   * @throws IOException	if finishing up fails
    */
-  public int statusCode() {
-    return m_StatusCode;
-  }
-
-  /**
-   * Returns the HTTP status message.
-   *
-   * @return		the message
-   */
-  public String statusMessage() {
-    return m_StatusMessage;
-  }
-
-  /**
-   * Returns the headers.
-   *
-   * @return		the headers
-   */
-  public Map<String,List<String>> headers() {
-    return m_Headers;
-  }
-
-  /**
-   * Returns the received cookies ("Set-Cookie").
-   *
-   * @return		the cookies
-   */
-  public Map<String,String> cookies() {
-    return m_Cookies;
-  }
-
-  /**
-   * Whether the request has a code of less than 400.
-   *
-   * @return		true if <400
-   */
-  public boolean ok() {
-    return (statusCode() < 400);
+  public void finishBody() throws IOException {
   }
 
   /**
@@ -136,7 +64,7 @@ public class Response
    * @return		the body
    */
   public byte[] body() {
-    return m_Body;
+    return m_Body.toArray();
   }
 
   /**
@@ -155,7 +83,7 @@ public class Response
    * @return		the text
    */
   public String text(String encoding) throws UnsupportedEncodingException {
-    return new String(m_Body, encoding);
+    return new String(body(), encoding);
   }
 
   /**
@@ -175,7 +103,7 @@ public class Response
    * @throws IOException	if writing fails
    */
   public void saveBody(File file) throws IOException {
-    Files.write(file.toPath(), m_Body, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    Files.write(file.toPath(), body(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
   }
 
   /**
@@ -185,6 +113,6 @@ public class Response
    */
   @Override
   public String toString() {
-    return "status code: " + statusCode() + ", status message: " + statusMessage() + ", body length: " + body().length + ", headers: " + headers();
+    return super.toString() + ", body length: " + body().length;
   }
 }

@@ -9,7 +9,7 @@ import com.github.fracpete.requests4j.Requests;
 import com.github.fracpete.requests4j.core.Response;
 
 /**
- * Just reads an HTML page and outputs the HTML on stdout.
+ * Just reads an HTML page (stores response in memory) and outputs the HTML on stdout.
  *
  * @author FracPete (fracpete at waikato dot ac dot nz)
  */
