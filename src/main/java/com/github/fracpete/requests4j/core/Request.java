@@ -15,7 +15,9 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -68,6 +70,9 @@ public class Request
   /** the maximum number of redirects. */
   protected int m_MaxRedirects;
 
+  /** the proxy to use. */
+  protected Proxy m_Proxy;
+
   /**
    * Initializes the request.
    *
@@ -86,6 +91,7 @@ public class Request
     m_ReadTimeout       = -1;
     m_AllowRedirects    = false;
     m_MaxRedirects      = 3;
+    m_Proxy             = null;
   }
 
   /**
@@ -402,6 +408,38 @@ public class Request
   }
 
   /**
+   * Sets the proxy to use.
+   *
+   * @param type	the type of proxy
+   * @param server	the server or IP
+   * @param port	the port
+   * @return		itself
+   */
+  public Request proxy(Proxy.Type type, String server, int port) {
+    m_Proxy = new Proxy(type, new InetSocketAddress(server, port));
+    return this;
+  }
+
+  /**
+   * Uses direct connection.
+   *
+   * @return		itself
+   */
+  public Request noProxy() {
+    m_Proxy = null;
+    return this;
+  }
+
+  /**
+   * Returns the currently set proxy.
+   *
+   * @return		the proxy, null if none used
+   */
+  public Proxy proxy() {
+    return m_Proxy;
+  }
+
+  /**
    * Assembles the full URL.
    *
    * @return		the URL
@@ -472,7 +510,10 @@ public class Request
     String		boundary;
     boolean		writeBody;
 
-    result = (HttpURLConnection) url.openConnection();
+    if (m_Proxy != null)
+      result = (HttpURLConnection) url.openConnection(m_Proxy);
+    else
+      result = (HttpURLConnection) url.openConnection();
     if (m_ConnectionTimeout >= 0)
       result.setConnectTimeout(m_ConnectionTimeout);
     if (m_ReadTimeout >= 0)
