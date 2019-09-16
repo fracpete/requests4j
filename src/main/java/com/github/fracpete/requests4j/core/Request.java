@@ -48,7 +48,7 @@ public class Request
   protected Map<String,String> m_Parameters;
 
   /** the body to send. */
-  protected String m_Body;
+  protected Object m_Body;
 
   /** the form data. */
   protected FormData m_FormData;
@@ -80,7 +80,7 @@ public class Request
     m_Cookies           = new HashMap<>();
     m_Parameters        = new HashMap<>();
     m_Authentication    = new NoAuthentication();
-    m_Body              = "";
+    m_Body              = null;
     m_FormData          = new FormData();
     m_ConnectionTimeout = -1;
     m_ReadTimeout       = -1;
@@ -241,11 +241,26 @@ public class Request
   }
 
   /**
+   * Sets the body to send (POST, PUT, PATCH).
+   *
+   * @param body	the body
+   * @return		itself
+   * @see		Method#hasBody()
+   */
+  public Request body(byte[] body) {
+    if (m_Method.hasBody())
+      m_Body = body;
+    else
+      System.err.println("Method " + m_Method + " does not support a body!");
+    return this;
+  }
+
+  /**
    * Returns the body to send.
    *
-   * @return		the body
+   * @return		the body (string or byte array)
    */
-  public String body() {
+  public Object body() {
     return m_Body;
   }
 
@@ -455,6 +470,7 @@ public class Request
     HttpURLConnection 	result;
     BufferedWriter	writer;
     String		boundary;
+    boolean		writeBody;
 
     result = (HttpURLConnection) url.openConnection();
     if (m_ConnectionTimeout >= 0)
@@ -469,6 +485,7 @@ public class Request
     for (String key: m_Cookies.keySet())
       result.setRequestProperty(key, m_Cookies.get(key));
 
+    writeBody = false;
     if (m_Method.hasBody()) {
       if (m_Method == POST) {
 	if (m_FormData.size() > 0) {
@@ -478,18 +495,26 @@ public class Request
 	  m_FormData.post(result, writer, boundary);
 	  writer.close();
 	}
-	else if (!body().isEmpty()) {
-	  writer = new BufferedWriter(new OutputStreamWriter(result.getOutputStream()));
-	  writer.write(body());
-	  writer.close();
+	else if (body() != null) {
+	  writeBody = true;
 	}
       }
       else {
-	if (!body().isEmpty()) {
-	  writer = new BufferedWriter(new OutputStreamWriter(result.getOutputStream()));
-	  writer.write(body());
-	  writer.close();
-	}
+	writeBody = (body() != null);
+      }
+    }
+
+    if (writeBody) {
+      if (body() instanceof String) {
+	writer = new BufferedWriter(new OutputStreamWriter(result.getOutputStream()));
+	writer.write((String) body());
+	writer.close();
+      }
+      else if (body() instanceof byte[]) {
+        result.getOutputStream().write((byte[]) body());
+      }
+      else {
+        throw new IllegalStateException("Unhandled body type (expected String or byte[]), found: " + body().getClass());
       }
     }
 
