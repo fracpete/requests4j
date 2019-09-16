@@ -62,6 +62,18 @@ public class FormData
   }
 
   /**
+   * Adds the map as string form parameters.
+   *
+   * @param parameters	the parameters to add
+   * @return		itself
+   */
+  public FormData add(Map<String,String> parameters) {
+    for (String key: parameters.keySet())
+      add(new StringParameter(key, parameters.get(key)));
+    return this;
+  }
+
+  /**
    * Adds the file as form parameter.
    *
    * @param name	the parameter name
