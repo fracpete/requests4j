@@ -28,7 +28,7 @@ public abstract class AbstractResponse
   protected Map<String,List<String>> m_Headers;
 
   /** the cookies. */
-  protected Map<String,String> m_Cookies;
+  protected Cookies m_Cookies;
 
   /**
    * Initializes the response.
@@ -37,7 +37,7 @@ public abstract class AbstractResponse
     m_StatusCode    = 200;
     m_StatusMessage = "";
     m_Headers       = new HashMap<>();
-    m_Cookies       = new HashMap<>();
+    m_Cookies       = new Cookies();
   }
 
   /**
@@ -54,7 +54,7 @@ public abstract class AbstractResponse
     m_StatusCode    = statusCode;
     m_StatusMessage = statusMessage;
     m_Headers       = new HashMap<>(headers);
-    m_Cookies       = CookieParser.parse(m_Headers);
+    m_Cookies       = Cookies.parse(m_Headers);
   }
 
   /**
@@ -89,7 +89,7 @@ public abstract class AbstractResponse
    *
    * @return		the cookies
    */
-  public Map<String,String> cookies() {
+  public Cookies cookies() {
     return m_Cookies;
   }
 

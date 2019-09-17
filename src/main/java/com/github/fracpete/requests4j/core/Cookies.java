@@ -1,5 +1,5 @@
 /*
- * CookieParser.java
+ * Cookies.java
  * Copyright (C) 2019 University of Waikato, Hamilton, NZ
  */
 
@@ -10,11 +10,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Helper class for extracting cookies from HTTP response headers.
+ * Manages cookies.
  *
  * @author FracPete (fracpete at waikato dot ac dot nz)
  */
-public class CookieParser {
+public class Cookies
+  extends HashMap<String,String> {
 
   public static final String SET_COOKIE = "Set-Cookie";
 
@@ -24,13 +25,13 @@ public class CookieParser {
    * @param headers 	the headers to parse
    * @return 		the cookies (if any)
    */
-  public static Map<String,String> parse(Map<String,List<String>> headers) {
-    Map<String,String> 	result;
+  public static Cookies parse(Map<String,List<String>> headers) {
+    Cookies 		result;
     List<String> 	cookies;
     String		name;
     String		value;
 
-    result  = new HashMap<>();
+    result  = new Cookies();
     cookies = headers.get(SET_COOKIE);
     if (cookies == null)
       cookies = headers.get(SET_COOKIE.toLowerCase());
@@ -49,5 +50,4 @@ public class CookieParser {
 
     return result;
   }
-
 }

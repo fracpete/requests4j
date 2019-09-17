@@ -7,8 +7,15 @@ package com.github.fracpete.requests4j.core;
 
 import com.github.fracpete.requests4j.auth.AbstractAuthentication;
 import com.github.fracpete.requests4j.auth.NoAuthentication;
+import com.github.fracpete.requests4j.event.RequestExecutionEvent;
+import com.github.fracpete.requests4j.event.RequestExecutionListener;
+import com.github.fracpete.requests4j.event.RequestFailureEvent;
+import com.github.fracpete.requests4j.event.RequestFailureListener;
 import com.github.fracpete.requests4j.form.FormData;
+import com.github.fracpete.requests4j.ssl.NoHostnameVerification;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,8 +28,10 @@ import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import static com.github.fracpete.requests4j.core.Method.POST;
 
@@ -44,7 +53,7 @@ public class Request
   protected Map<String,String> m_Headers;
 
   /** the cookies. */
-  protected Map<String,String> m_Cookies;
+  protected Cookies m_Cookies;
 
   /** the parameters. */
   protected Map<String,String> m_Parameters;
@@ -73,6 +82,15 @@ public class Request
   /** the proxy to use. */
   protected Proxy m_Proxy;
 
+  /** the hostname verifier to use. */
+  protected HostnameVerifier m_HostnameVerification;
+
+  /** the execution listeners. */
+  protected transient Set<RequestExecutionListener> m_ExecutionListeners;
+
+  /** the failure listeners. */
+  protected transient Set<RequestFailureListener> m_FailureListeners;
+
   /**
    * Initializes the request.
    *
@@ -82,7 +100,7 @@ public class Request
     m_Method            = method;
     m_URL               = null;
     m_Headers           = new HashMap<>();
-    m_Cookies           = new HashMap<>();
+    m_Cookies           = new Cookies();
     m_Parameters        = new HashMap<>();
     m_Authentication    = new NoAuthentication();
     m_Body              = null;
@@ -92,6 +110,7 @@ public class Request
     m_AllowRedirects    = false;
     m_MaxRedirects      = 3;
     m_Proxy             = null;
+    m_HostnameVerification = null;
   }
 
   /**
@@ -191,11 +210,22 @@ public class Request
   }
 
   /**
+   * Adds all the cookies.
+   *
+   * @param cookies	the cookies
+   * @return		itself
+   */
+  public Request cookies(Cookies cookies) {
+    m_Cookies.putAll(cookies);
+    return this;
+  }
+
+  /**
    * Returns the current cookies.
    *
    * @return		the cookies
    */
-  public Map<String,String> cookies() {
+  public Cookies cookies() {
     return m_Cookies;
   }
 
@@ -440,6 +470,105 @@ public class Request
   }
 
   /**
+   * Sets the hostname verifier to use (https only).
+   *
+   * @param verifier	the verifier to use, null to use system default
+   * @return		itself
+   */
+  public Request hostnameVerification(HostnameVerifier verifier) {
+    m_HostnameVerification = verifier;
+    return this;
+  }
+
+  /**
+   * Disables hostname verification (https only).
+   *
+   * @return		itself
+   */
+  public Request disableHostnameVerification() {
+    return hostnameVerification(new NoHostnameVerification());
+  }
+
+  /**
+   * Returns the current hostname verification scheme.
+   *
+   * @return		the scheme, null if none set
+   */
+  public HostnameVerifier hostnameVerification() {
+    return m_HostnameVerification;
+  }
+
+  /**
+   * Adds the execution listener.
+   *
+   * @param l		the listener
+   */
+  public synchronized Request addExecutionListener(RequestExecutionListener l) {
+    if (m_ExecutionListeners == null)
+      m_ExecutionListeners = new HashSet<>();
+    m_ExecutionListeners.add(l);
+    return this;
+  }
+
+  /**
+   * Removes the execution listener.
+   *
+   * @param l		the listener
+   */
+  public synchronized Request removeExecutionListener(RequestExecutionListener l) {
+    if (m_ExecutionListeners != null)
+      m_ExecutionListeners.remove(l);
+    return this;
+  }
+
+  /**
+   * Sends the event to all execution listeners.
+   *
+   * @param e		the event to send
+   */
+  protected synchronized void notifyExecutionListeners(RequestExecutionEvent e) {
+    if (m_ExecutionListeners == null)
+      return;
+    for (RequestExecutionListener l: m_ExecutionListeners)
+      l.requestExecuted(e);
+  }
+
+  /**
+   * Adds the failure listener.
+   *
+   * @param l		the listener
+   */
+  public synchronized Request addFailureListener(RequestFailureListener l) {
+    if (m_FailureListeners == null)
+      m_FailureListeners = new HashSet<>();
+    m_FailureListeners.add(l);
+    return this;
+  }
+
+  /**
+   * Removes the failure listener.
+   *
+   * @param l		the listener
+   */
+  public synchronized Request removeFailureListener(RequestFailureListener l) {
+    if (m_FailureListeners != null)
+      m_FailureListeners.remove(l);
+    return this;
+  }
+
+  /**
+   * Sends the event to all failure listeners.
+   *
+   * @param e		the event to send
+   */
+  protected synchronized void notifyFailureListeners(RequestFailureEvent e) {
+    if (m_FailureListeners == null)
+      return;
+    for (RequestFailureListener l: m_FailureListeners)
+      l.requestFailed(e);
+  }
+
+  /**
    * Assembles the full URL.
    *
    * @return		the URL
@@ -514,6 +643,8 @@ public class Request
       result = (HttpURLConnection) url.openConnection(m_Proxy);
     else
       result = (HttpURLConnection) url.openConnection();
+    if ((result instanceof HttpsURLConnection) && (m_HostnameVerification != null))
+      ((HttpsURLConnection) result).setHostnameVerifier(m_HostnameVerification);
     if (m_ConnectionTimeout >= 0)
       result.setConnectTimeout(m_ConnectionTimeout);
     if (m_ReadTimeout >= 0)
@@ -524,7 +655,7 @@ public class Request
     for (String key: m_Headers.keySet())
       result.setRequestProperty(key, m_Headers.get(key));
     for (String key: m_Cookies.keySet())
-      result.setRequestProperty(key, m_Cookies.get(key));
+      result.setRequestProperty("Cookie", key + "=" + m_Cookies.get(key));
 
     writeBody = false;
     if (m_Method.hasBody()) {
@@ -623,21 +754,29 @@ public class Request
     InputStream		in;
     int			b;
 
-    if (m_URL == null)
-      throw new IllegalStateException("No URL provided!");
+    try {
+      if (m_URL == null)
+	throw new IllegalStateException("No URL provided!");
 
-    m_Authentication.apply(this);
-    url  = assembleURL();
-    conn = getConnection(url);
+      m_Authentication.apply(this);
+      url = assembleURL();
+      conn = getConnection(url);
 
-    response.init(conn.getResponseCode(), conn.getResponseMessage(), conn.getHeaderFields());
+      response.init(conn.getResponseCode(), conn.getResponseMessage(), conn.getHeaderFields());
 
-    in = conn.getInputStream();
-    while ((b = in.read()) != -1)
-      response.appendBody((byte) b);
-    response.finishBody();
+      in = conn.getInputStream();
+      while ((b = in.read()) != -1)
+	response.appendBody((byte) b);
+      response.finishBody();
 
-    conn.disconnect();
+      conn.disconnect();
+
+      notifyExecutionListeners(new RequestExecutionEvent(this, response));
+    }
+    catch (Throwable t) {
+      notifyFailureListeners(new RequestFailureEvent(this, t));
+      throw t;
+    }
 
     return response;
   }
