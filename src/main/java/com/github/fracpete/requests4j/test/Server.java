@@ -36,6 +36,7 @@ public class Server {
     m_Server = HttpServer.create(new InetSocketAddress(port), 0);
     m_Server.createContext(path, handler.newInstance());
     m_Server.setExecutor(null);
+    System.out.println("Initialized server: port " + port + ", handling '" + path + "' with " + handler.getName());
   }
 
   /**
@@ -43,6 +44,7 @@ public class Server {
    */
   public void start() {
     m_Server.start();
+    System.out.println("Started server");
   }
 
   /**
@@ -52,6 +54,7 @@ public class Server {
    */
   public void stop(int delay) {
     m_Server.stop(delay);
+    System.out.println("Stopped server");
   }
 
   /**
