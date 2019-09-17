@@ -100,6 +100,39 @@ With a `Response` object, you have access to:
 With the `saveBody` methods, you can save the binary response data as is to the 
 supplied file.
 
+## Sessions
+To avoid having to string along and update any cookies for requests, you can
+simply create a `Session` object which will take of that (package `com.github.fracpete.requests4j`).
+The `Session` object has the same methods for instantiating request (though this 
+time non-static) as the `Requests` class described above. The `Session` class
+also supports hostname verification (see below), which it will apply to each
+subsequent request. 
+
+```java
+import com.github.fracpete.requests4j.Requests;
+import com.github.fracpete.requests4j.Session;
+import com.github.fracpete.requests4j.core.FileResponse;
+
+public class SessionExample {
+  public static void main(String[] args) {
+    Session session = new Session();
+    Response login = session.post("http://some.server.com/login")
+      .formData(
+        new FormData()
+          .add("user", "myuser")
+          .add("password", "mysecretpassword")
+      )
+      .execute();
+    if (login.ok()) {
+      Response action = session.get("http://some.server.com/somethingelse")
+        .execute();
+      System.out.println(action.text());
+    }
+  }
+}
+
+``` 
+
 
 ## Advanced usage
 ### Different response objects
@@ -110,14 +143,14 @@ classes instead (package `com.github.fracpete.requests4j.core`):
 * `FileResponse` - streams the incoming data straight to the specified output file
 * `StreamResponse` - uses the supplied `java.io.OutputStream` to forward the incoming data to  
 
-Each of these classes implements the `HTTPResponse` interface that all response
+Each of these classes implements the `HttpResponse` interface that all response
 classes share, giving you access to the following methods:
 * HTTP status code -- `statusCode()`
 * HTTP status message -- `statusMessage()`
 * HTTP headers -- `headers()`
 * Cookies -- `cookies()` (parsed from the `Set-Cookie` headers)
 
-Instead of using the `execute()` method, you now use the `execute(HTTPResponse)` 
+Instead of using the `execute()` method, you now use the `execute(HttpResponse)` 
 method, supplying the fully configured response object. The following example
 shows how to download a remote ZIP file straight to a file:
 ```java
@@ -169,6 +202,35 @@ public class Redirect {
   }
 }
 ```
+
+
+### Proxies
+Basic proxy support is available through the `proxy(...)` and `noProxy()`
+methods. The following request configures a proxy (`proxy.domain.com:80`) for 
+http connections:
+
+```java
+import java.net.Proxy;
+
+public class Redirect {
+  public static void main(String[] args) throws Exception {
+    Response r = Requests.get("http://some.server.com/")
+      .proxy(Proxy.Type.HTTP, "proxy.domain.com", 80)
+      .execute();
+  }
+}
+```
+
+
+### Hostname verification
+In certain cases, like development phase, it may be necessary to change Java's 
+default hostname verification for https connections. This is possible using
+the `hostnameVerification(javax.net.ssl.HostnameVerifier)` or `disableHostnameVerification()`
+methods. The following pre-built verification schemes are available (package 
+`com.github.fracpete.requests4j.ssl`):
+* `LocahostVerification` - localhost/127.0.0.1 always succeeds
+* `NoHostnameVerification` - always succeeds
+* `RegExpHostnameVerification` - matches the hostname against a regular expression 
 
 
 ## Examples
