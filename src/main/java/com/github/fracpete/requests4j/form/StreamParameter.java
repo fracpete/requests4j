@@ -125,6 +125,7 @@ public class StreamParameter
     int 		read;
     byte[] 		buffer;
 
+    writer.write("\r\n");
     writer.write("--" + boundary + "\r\n");
     writer.write("Content-Disposition: form-data; name=\"" + name() + "\"; filename=\"" + new File(filename()).getName() + "\"\r\n");
     writer.write("Content-Type: " + mimeType().toString() + "\r\n");

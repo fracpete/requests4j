@@ -131,7 +131,6 @@ public class FormData
    */
   public void post(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException {
     if (size() > 0) {
-      writer.write("\n\n");
       for (String key : keySet())
 	get(key).post(conn, writer, boundary);
     }

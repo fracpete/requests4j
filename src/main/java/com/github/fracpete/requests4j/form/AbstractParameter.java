@@ -26,6 +26,8 @@ public abstract class AbstractParameter {
    * @param name	the name
    */
   protected AbstractParameter(String name) {
+    if (name == null)
+      throw new IllegalStateException("Parameter name cannot be null!");
     m_Name = name;
   }
 

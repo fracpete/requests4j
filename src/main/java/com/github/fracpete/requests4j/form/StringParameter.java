@@ -30,6 +30,8 @@ public class StringParameter
    */
   public StringParameter(String name, String value) {
     super(name);
+    if (value == null)
+      throw new IllegalStateException("String parameter value cannot be null (name=" + name + ")!");
     m_Value = value;
   }
 
@@ -52,11 +54,11 @@ public class StringParameter
    */
   @Override
   public void post(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException {
+    writer.write("\r\n");
     writer.write("--" + boundary + "\r\n");
     writer.write("Content-Disposition: form-data; name=\"" + name() + "\"\r\n");
     writer.write("\r\n");
     writer.write(value());
-    writer.write("\r\n");
   }
 
   /**
