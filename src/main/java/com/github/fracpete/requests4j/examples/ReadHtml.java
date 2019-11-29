@@ -6,7 +6,7 @@
 package com.github.fracpete.requests4j.examples;
 
 import com.github.fracpete.requests4j.Requests;
-import com.github.fracpete.requests4j.core.BasicResponse;
+import com.github.fracpete.requests4j.response.BasicResponse;
 
 /**
  * Just reads an HTML page (stores response in memory) and outputs the HTML on stdout.

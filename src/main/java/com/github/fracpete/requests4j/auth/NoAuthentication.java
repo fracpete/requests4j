@@ -5,7 +5,7 @@
 
 package com.github.fracpete.requests4j.auth;
 
-import com.github.fracpete.requests4j.core.Request;
+import com.github.fracpete.requests4j.request.Request;
 import org.apache.http.client.protocol.HttpClientContext;
 
 /**

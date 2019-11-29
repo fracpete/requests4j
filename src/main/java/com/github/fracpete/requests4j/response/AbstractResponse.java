@@ -3,7 +3,7 @@
  * Copyright (C) 2019 University of Waikato, Hamilton, NZ
  */
 
-package com.github.fracpete.requests4j.core;
+package com.github.fracpete.requests4j.response;
 
 import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;

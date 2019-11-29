@@ -6,7 +6,7 @@
 package com.github.fracpete.requests4j.examples;
 
 import com.github.fracpete.requests4j.Requests;
-import com.github.fracpete.requests4j.core.StreamResponse;
+import com.github.fracpete.requests4j.response.StreamResponse;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

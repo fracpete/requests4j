@@ -3,7 +3,7 @@
  * Copyright (C) 2019 University of Waikato, Hamilton, NZ
  */
 
-package com.github.fracpete.requests4j.core;
+package com.github.fracpete.requests4j.request;
 
 import com.github.fracpete.requests4j.auth.AbstractAuthentication;
 import com.github.fracpete.requests4j.auth.NoAuthentication;
@@ -12,6 +12,8 @@ import com.github.fracpete.requests4j.event.RequestExecutionListener;
 import com.github.fracpete.requests4j.event.RequestFailureEvent;
 import com.github.fracpete.requests4j.event.RequestFailureListener;
 import com.github.fracpete.requests4j.form.FormData;
+import com.github.fracpete.requests4j.response.BasicResponse;
+import com.github.fracpete.requests4j.response.Response;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.client.CookieStore;

@@ -6,7 +6,7 @@
 package com.github.fracpete.requests4j.examples;
 
 import com.github.fracpete.requests4j.Requests;
-import com.github.fracpete.requests4j.core.FileResponse;
+import com.github.fracpete.requests4j.response.FileResponse;
 
 import java.io.File;
 

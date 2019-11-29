@@ -5,8 +5,8 @@
 
 package com.github.fracpete.requests4j;
 
-import com.github.fracpete.requests4j.core.Request;
-import com.github.fracpete.requests4j.core.Response;
+import com.github.fracpete.requests4j.request.Request;
+import com.github.fracpete.requests4j.response.Response;
 import com.github.fracpete.requests4j.event.RequestExecutionEvent;
 import com.github.fracpete.requests4j.event.RequestExecutionListener;
 import com.github.fracpete.requests4j.event.RequestFailureEvent;

@@ -5,17 +5,17 @@
 
 package com.github.fracpete.requests4j;
 
-import com.github.fracpete.requests4j.core.Request;
+import com.github.fracpete.requests4j.request.Request;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import static com.github.fracpete.requests4j.core.Method.DELETE;
-import static com.github.fracpete.requests4j.core.Method.GET;
-import static com.github.fracpete.requests4j.core.Method.HEAD;
-import static com.github.fracpete.requests4j.core.Method.PATCH;
-import static com.github.fracpete.requests4j.core.Method.POST;
-import static com.github.fracpete.requests4j.core.Method.PUT;
+import static com.github.fracpete.requests4j.request.Method.DELETE;
+import static com.github.fracpete.requests4j.request.Method.GET;
+import static com.github.fracpete.requests4j.request.Method.HEAD;
+import static com.github.fracpete.requests4j.request.Method.PATCH;
+import static com.github.fracpete.requests4j.request.Method.POST;
+import static com.github.fracpete.requests4j.request.Method.PUT;
 
 /**
  * Main class for generating new requests.

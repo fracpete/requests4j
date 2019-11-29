@@ -68,7 +68,7 @@ of the form data:
 
 ```java
 import com.github.fracpete.requests4j.Requests;
-import com.github.fracpete.requests4j.core.BasicResponse;
+import com.github.fracpete.requests4j.response.BasicResponse;
 import com.github.fracpete.requests4j.form.FormData;
 
 public class FormUpload {
@@ -90,7 +90,7 @@ public class FormUpload {
 ### Execute and response
 Once fully configured, you can execute a request with the `execute()` method,
 which will either fail with an exception or return a `BasicResponse` object (package 
-`com.github.fracpete.requests4j.core`).
+`com.github.fracpete.requests4j.response`).
 
 With a `BasicResponse` object, you have access to:
 * HTTP status code -- `statusCode()`
@@ -116,7 +116,7 @@ subsequent request.
 ```java
 import com.github.fracpete.requests4j.Requests;
 import com.github.fracpete.requests4j.Session;
-import com.github.fracpete.requests4j.core.BasicResponse;
+import com.github.fracpete.requests4j.response.BasicResponse;
 
 public class SessionExample {
   public static void main(String[] args) {
@@ -144,7 +144,7 @@ public class SessionExample {
 The `BasicResponse` object simply stores the received data in memory, which is fine
 for receiving HTML pages or small binary objects. However, for downloading
 large binary files, it is recommended to use one of the following response
-classes instead (package `com.github.fracpete.requests4j.core`):
+classes instead (package `com.github.fracpete.requests4j.response`):
 * `FileResponse` - streams the incoming data straight to the specified output file
 * `StreamResponse` - uses the supplied `java.io.OutputStream` to forward the incoming data to  
 
@@ -155,12 +155,12 @@ classes share, giving you access to the following methods:
 * HTTP headers -- `headers()`
 * raw HTTPClient response -- `rawResponse()`
 
-Instead of using the `execute()` method, you now use the `execute(HttpResponse)` 
+Instead of using the `execute()` method, you now use the `execute(Response)` 
 method, supplying the fully configured response object. The following example
 shows how to download a remote ZIP file straight to a file:
 ```java
 import com.github.fracpete.requests4j.Requests;
-import com.github.fracpete.requests4j.core.FileResponse;
+import com.github.fracpete.requests4j.response.FileResponse;
 
 public class FileResponseDownload {
   public static void main(String[] args) {
@@ -179,7 +179,7 @@ In that case, you can use `BasicAuthentication` to provide these credentials:
 ```java
 import com.github.fracpete.requests4j.Requests;
 import com.github.fracpete.requests4j.auth.BasicAuthentication;
-import com.github.fracpete.requests4j.core.BasicResponse;
+import com.github.fracpete.requests4j.response.BasicResponse;
 
 public class Auth {
   public static void main(String[] args) throws Exception {
