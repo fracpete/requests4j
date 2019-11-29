@@ -215,8 +215,6 @@ methods. The following request configures a proxy (`proxy.domain.com:80`) for
 http connections:
 
 ```java
-import java.net.Proxy;
-
 public class Redirect {
   public static void main(String[] args) throws Exception {
     BasicResponse r = Requests.get("http://some.server.com/")
