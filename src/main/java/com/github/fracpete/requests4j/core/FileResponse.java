@@ -5,12 +5,12 @@
 
 package com.github.fracpete.requests4j.core;
 
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.tika.io.IOUtils;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Streams the data directly to a file. Useful for large downloads.
@@ -25,12 +25,6 @@ public class FileResponse
 
   /** the buffer size (<= 0 for default). */
   protected int m_BufferSize;
-
-  /** the file output stream. */
-  protected transient FileOutputStream m_FileOutputStream;
-
-  /** the buffered output stream. */
-  protected transient BufferedOutputStream m_BufferedOutputStream;
 
   /**
    * Initializes the response.
@@ -76,14 +70,32 @@ public class FileResponse
   /**
    * Initializes the response object.
    *
-   * @param statusCode		the HTTP status code
-   * @param statusMessage	the HTTP status message
-   * @param headers		the received headers
+   * @param response		the response
    */
   @Override
-  public void init(int statusCode, String statusMessage, Map<String, List<String>> headers) {
-    super.init(statusCode, statusMessage, headers);
-    m_FileOutputStream = null;
+  public void init(CloseableHttpResponse response) {
+    FileOutputStream 		fos;
+    BufferedOutputStream 	bos;
+
+    super.init(response);
+
+    fos = null;
+    bos = null;
+    try {
+      fos = new FileOutputStream(m_OutputFile.getAbsolutePath());
+      if (m_BufferSize <= 0)
+	bos = new BufferedOutputStream(fos);
+      else
+	bos = new BufferedOutputStream(fos, m_BufferSize);
+      IOUtils.copy(response.getEntity().getContent(), bos);
+    }
+    catch (Exception e) {
+      // TODO error message?
+    }
+    finally {
+      IOUtils.closeQuietly(bos);
+      IOUtils.closeQuietly(fos);
+    }
   }
 
   /**
@@ -102,42 +114,6 @@ public class FileResponse
    */
   public int bufferSize() {
     return m_BufferSize;
-  }
-
-  /**
-   * Appends the byte read from the response.
-   *
-   * @param b		the byte to append
-   * @throws IOException	if appending failed
-   */
-  @Override
-  public void appendBody(byte b) throws IOException {
-    if (m_FileOutputStream == null) {
-      m_FileOutputStream = new FileOutputStream(m_OutputFile.getAbsolutePath());
-      if (m_BufferSize <= 0)
-	m_BufferedOutputStream = new BufferedOutputStream(m_FileOutputStream);
-      else
-	m_BufferedOutputStream = new BufferedOutputStream(m_FileOutputStream, m_BufferSize);
-    }
-    m_BufferedOutputStream.write(b);
-  }
-
-  /**
-   * Called when all data from the response has been processed.
-   *
-   * @throws IOException	if finishing up fails
-   */
-  public void finishBody() throws IOException {
-    if (m_BufferedOutputStream != null) {
-      m_BufferedOutputStream.flush();
-      m_BufferedOutputStream.close();
-      m_BufferedOutputStream = null;
-    }
-    if (m_FileOutputStream != null) {
-      m_FileOutputStream.flush();
-      m_FileOutputStream.close();
-      m_FileOutputStream = null;
-    }
   }
 
   /**

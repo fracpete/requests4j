@@ -5,23 +5,25 @@
 
 package com.github.fracpete.requests4j;
 
-import com.github.fracpete.requests4j.core.HttpResponse;
 import com.github.fracpete.requests4j.core.Request;
+import com.github.fracpete.requests4j.core.Response;
 import com.github.fracpete.requests4j.event.RequestExecutionEvent;
 import com.github.fracpete.requests4j.event.RequestExecutionListener;
 import com.github.fracpete.requests4j.event.RequestFailureEvent;
 import com.github.fracpete.requests4j.event.RequestFailureListener;
-import com.github.fracpete.requests4j.ssl.NoHostnameVerification;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 
-import javax.net.ssl.HostnameVerifier;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * Session object for making requests, maintains and adds them automatically
+ * Session object for making requests, maintains client/cookies and adds them automatically
  * to the requests.
  *
  * @author FracPete (fracpete at waikato dot ac dot nz)
@@ -29,19 +31,14 @@ import java.util.Map;
 public class Session
   implements Serializable, RequestExecutionListener, RequestFailureListener {
 
+  /** the client. */
+  protected CloseableHttpClient m_Client;
+
   /** the cookies. */
-  protected Map<String,String> m_Cookies;
+  protected CookieStore m_Cookies;
 
-  /** the hostname verification to use for the session. */
-  protected HostnameVerifier m_HostnameVerification;
-
-  /**
-   * Initializes the session.
-   */
-  public Session() {
-    m_Cookies              = new HashMap<>();
-    m_HostnameVerification = null;
-  }
+  /** for storing credentials. */
+  protected CredentialsProvider m_Credentials;
 
   /**
    * Sets the cookies and adds itself as execution listener to the request.
@@ -50,11 +47,9 @@ public class Session
    * @return		the updated request
    */
   protected Request process(Request request) {
-    request.cookies(m_Cookies);
-    if (m_HostnameVerification != null)
-      request.hostnameVerification(m_HostnameVerification);
-    request.addExecutionListener(this);
-    request.addFailureListener(this);
+    request.client(client());
+    request.cookies(cookies());
+    request.credentials(credentials());
     return request;
   }
 
@@ -64,11 +59,9 @@ public class Session
    * Removes itself again from the execution listeners.
    *
    * @param e		the event
-   * @see		HttpResponse#ok()
+   * @see		Response#ok()
    */
   public void requestExecuted(RequestExecutionEvent e) {
-    if (e.getReponse().ok())
-      m_Cookies.putAll(e.getReponse().cookies());
     e.getRequest().removeExecutionListener(this);
     e.getRequest().removeFailureListener(this);
   }
@@ -85,32 +78,17 @@ public class Session
   }
 
   /**
-   * Sets the hostname verifier to use (https only).
+   * Returns the client to use.
    *
-   * @param verifier	the verifier to use, null to use system default
-   * @return		itself
+   * @return		the client
    */
-  public Session hostnameVerification(HostnameVerifier verifier) {
-    m_HostnameVerification = verifier;
-    return this;
-  }
-
-  /**
-   * Disables hostname verification (https only).
-   *
-   * @return		itself
-   */
-  public Session disableHostnameVerification() {
-    return hostnameVerification(new NoHostnameVerification());
-  }
-
-  /**
-   * Returns the current hostname verification scheme.
-   *
-   * @return		the scheme, null if none set
-   */
-  public HostnameVerifier hostnameVerification() {
-    return m_HostnameVerification;
+  public synchronized CloseableHttpClient client() {
+    if (m_Client == null)
+      m_Client = HttpClients.custom()
+	.setDefaultCookieStore(cookies())
+	.setDefaultCredentialsProvider(credentials())
+	.build();
+    return m_Client;
   }
 
   /**
@@ -118,8 +96,21 @@ public class Session
    *
    * @return		the cookies
    */
-  public Map<String,String> cookies() {
+  public CookieStore cookies() {
+    if (m_Cookies == null)
+       m_Cookies = new BasicCookieStore();
     return m_Cookies;
+  }
+
+  /**
+   * Returns the credentials.
+   *
+   * @return		the credentials
+   */
+  public CredentialsProvider credentials() {
+    if (m_Credentials == null)
+      m_Credentials = new BasicCredentialsProvider();
+    return m_Credentials;
   }
 
   /**
@@ -297,13 +288,26 @@ public class Session
   }
 
   /**
+   * Closes the client, if necessary.
+   */
+  public void close() {
+    if (m_Client != null) {
+      try {
+	m_Client.close();
+      }
+      catch (Exception e) {
+	// ignored
+      }
+    }
+  }
+
+  /**
    * Returns a short description of the session.
    *
    * @return		the description
    */
   @Override
   public String toString() {
-    return "cookies=" + cookies()
-      + ", hostnameVerification=" + (hostnameVerification() == null ? "-none-" : hostnameVerification().toString());
+    return "cookies=" + cookies();
   }
 }

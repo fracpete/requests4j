@@ -12,66 +12,95 @@ import com.github.fracpete.requests4j.event.RequestExecutionListener;
 import com.github.fracpete.requests4j.event.RequestFailureEvent;
 import com.github.fracpete.requests4j.event.RequestFailureListener;
 import com.github.fracpete.requests4j.form.FormData;
-import com.github.fracpete.requests4j.ssl.NoHostnameVerification;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpHost;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.cookie.BasicClientCookie;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
-import static com.github.fracpete.requests4j.core.Method.POST;
-
 /**
- * Encapsulates a request.
+ * For building a request.
  *
  * @author FracPete (fracpete at waikato dot ac dot nz)
  */
 public class Request
   implements Serializable {
 
-  /** the method. */
+  /** the method to use. */
   protected Method m_Method;
 
-  /** the URL to contact. */
+  /** the URL to connect to. */
   protected URL m_URL;
+
+  /** the HTTP client instance to reuse. */
+  protected CloseableHttpClient m_Client;
+
+  /** whether the client needs to be closed. */
+  protected boolean m_CloseClient;
+
+  /** the cookies. */
+  protected CookieStore m_Cookies;
+
+  /** for credentials. */
+  protected CredentialsProvider m_Credentials;
+
+  /** the authentication to use. */
+  protected AbstractAuthentication m_Authentication;
+
+  /** the proxy to use. */
+  protected HttpHost m_Proxy;
 
   /** the headers. */
   protected Map<String,String> m_Headers;
 
-  /** the cookies. */
-  protected Cookies m_Cookies;
-
   /** the parameters. */
   protected Map<String,String> m_Parameters;
 
-  /** the body to send. */
+  /** the body string to send. */
   protected Object m_Body;
 
   /** the form data. */
   protected FormData m_FormData;
 
-  /** the authentication to use. */
-  protected AbstractAuthentication m_Authentication;
+  /** the body content type. */
+  protected ContentType m_BodyContentType;
 
-  /** the connection timeout (msec), default if < 0. */
-  protected int m_ConnectionTimeout;
+  /** the socket timeout. */
+  protected int m_SocketTimeout;
 
-  /** the read timeout (msec), default if < 0. */
-  protected int m_ReadTimeout;
+  /** the connect timeout. */
+  protected int m_ConnectTimeout;
+
+  /** the connection request timeout. */
+  protected int m_ConnectionRequestTimeout;
 
   /** whether to allow redirects. */
   protected boolean m_AllowRedirects;
@@ -79,17 +108,14 @@ public class Request
   /** the maximum number of redirects. */
   protected int m_MaxRedirects;
 
-  /** the proxy to use. */
-  protected Proxy m_Proxy;
-
-  /** the hostname verifier to use. */
-  protected HostnameVerifier m_HostnameVerification;
-
   /** the execution listeners. */
   protected transient Set<RequestExecutionListener> m_ExecutionListeners;
 
   /** the failure listeners. */
   protected transient Set<RequestFailureListener> m_FailureListeners;
+
+  /** the current redirect count. */
+  protected int m_RedirectCount;
 
   /**
    * Initializes the request.
@@ -97,20 +123,25 @@ public class Request
    * @param method	the method to use
    */
   public Request(Method method) {
-    m_Method            = method;
-    m_URL               = null;
-    m_Headers           = new HashMap<>();
-    m_Cookies           = new Cookies();
-    m_Parameters        = new HashMap<>();
-    m_Authentication    = new NoAuthentication();
-    m_Body              = null;
-    m_FormData          = new FormData();
-    m_ConnectionTimeout = -1;
-    m_ReadTimeout       = -1;
-    m_AllowRedirects    = false;
-    m_MaxRedirects      = 3;
-    m_Proxy             = null;
-    m_HostnameVerification = null;
+    m_Method          = method;
+    m_URL             = null;
+    m_Client          = null;
+    m_CloseClient     = true;
+    m_Cookies         = null;
+    m_Credentials     = null;
+    m_Authentication  = new NoAuthentication();
+    m_Proxy           = null;
+    m_Headers         = new HashMap<>();
+    m_Parameters      = new HashMap<>();
+    m_Body            = null;
+    m_BodyContentType = ContentType.APPLICATION_OCTET_STREAM;
+    m_FormData        = new FormData();
+    m_SocketTimeout   = -1;
+    m_ConnectTimeout  = -1;
+    m_ConnectionRequestTimeout = -1;
+    m_AllowRedirects  = false;
+    m_MaxRedirects    = 3;
+    m_RedirectCount   = 0;
   }
 
   /**
@@ -155,6 +186,119 @@ public class Request
   }
 
   /**
+   * Sets the client to use.
+   *
+   * @param value 	the client
+   * @return		itself
+   */
+  public Request client(CloseableHttpClient value) {
+    m_Client      = value;
+    m_CloseClient = false;
+    return this;
+  }
+
+  /**
+   * Returns the client to use. Instantiates it if necessary.
+   *
+   * @return		the client
+   */
+  public CloseableHttpClient client() {
+    if (m_Client == null)
+      m_Client = HttpClients.custom()
+	.setDefaultCookieStore(cookies())
+	.setDefaultCredentialsProvider(credentials())
+	.disableRedirectHandling()
+	.build();
+    return m_Client;
+  }
+
+  /**
+   * Sets the cookies to use.
+   *
+   * @param value	the cookies
+   */
+  public Request cookies(CookieStore value) {
+    m_Cookies = value;
+    return this;
+  }
+
+  /**
+   * Sets the cookies to use.
+   *
+   * @param value	the cookies
+   */
+  public Request cookies(Map<String,String> value) {
+    for (String key: value.keySet())
+      cookies().addCookie(new BasicClientCookie(key, value.get(key)));
+    return this;
+  }
+
+  /**
+   * Returns the cookies to use. Instantiates them if necessary.
+   *
+   * @return		the cookies
+   */
+  public CookieStore cookies() {
+    if (m_Cookies == null)
+      m_Cookies = new BasicCookieStore();
+    return m_Cookies;
+  }
+
+  /**
+   * Adds the cookie.
+   *
+   * @param name	the name
+   * @param value	the value
+   * @return		itself
+   */
+  public Request cookie(String name, String value) {
+    return cookie(null, null, name, value);
+  }
+
+  /**
+   * Adds the cookie.
+   *
+   * @param domain 	the domain this cookie is for, ignored if null
+   * @param path	the path for the cookie, ignored if null
+   * @param name	the name
+   * @param value	the value
+   * @return		itself
+   */
+  public Request cookie(String domain, String path, String name, String value) {
+    BasicClientCookie	cookie;
+
+    cookie = new BasicClientCookie(name, value);
+    if (domain != null)
+      cookie.setDomain(domain);
+    if (path != null)
+      cookie.setPath(path);
+    m_Cookies.addCookie(cookie);
+    return this;
+  }
+
+  /**
+   * Sets the credentials to use.
+   *
+   * @param value	the credentials
+   * @return		itself
+   */
+  public Request credentials(CredentialsProvider value) {
+    m_Credentials = value;
+    return this;
+  }
+
+  /**
+   * Returns the credentials to use. Instantiates them if necessary.
+   *
+   * @return		the credentials
+   */
+  public CredentialsProvider credentials() {
+    if (m_Credentials == null)
+      m_Credentials = new BasicCredentialsProvider();
+    return m_Credentials;
+  }
+
+  /**
    * Adds the HTTP header.
    *
    * @param name	the name
@@ -184,49 +328,6 @@ public class Request
    */
   public Map<String,String> headers() {
     return m_Headers;
-  }
-
-  /**
-   * Adds the cookie.
-   *
-   * @param name	the name
-   * @param value	the value
-   * @return		itself
-   */
-  public Request cookie(String name, String value) {
-    m_Cookies.put(name, value);
-    return this;
-  }
-
-  /**
-   * Adds all the cookies.
-   *
-   * @param cookies	the cookies
-   * @return		itself
-   */
-  public Request cookies(Map<String,String> cookies) {
-    m_Cookies.putAll(cookies);
-    return this;
-  }
-
-  /**
-   * Adds all the cookies.
-   *
-   * @param cookies	the cookies
-   * @return		itself
-   */
-  public Request cookies(Cookies cookies) {
-    m_Cookies.putAll(cookies);
-    return this;
-  }
-
-  /**
-   * Returns the current cookies.
-   *
-   * @return		the cookies
-   */
-  public Cookies cookies() {
-    return m_Cookies;
   }
 
   /**
@@ -262,39 +363,123 @@ public class Request
   }
 
   /**
-   * Sets the body to send (POST, PUT, PATCH).
+   * Sets the authentication to use.
    *
-   * @param body	the body
+   * @param auth	the authentication, null to turn off
    * @return		itself
-   * @see		Method#hasBody()
    */
-  public Request body(String body) {
-    if (m_Method.hasBody())
-      m_Body = body;
-    else
-      System.err.println("Method " + m_Method + " does not support a body!");
+  public Request auth(AbstractAuthentication auth) {
+    if (auth == null)
+      auth = new NoAuthentication();
+    m_Authentication = auth;
     return this;
   }
 
   /**
-   * Sets the body to send (POST, PUT, PATCH).
+   * Returns the current authentication scheme.
    *
-   * @param body	the body
-   * @return		itself
-   * @see		Method#hasBody()
+   * @return		the authentication
    */
-  public Request body(byte[] body) {
-    if (m_Method.hasBody())
-      m_Body = body;
-    else
-      System.err.println("Method " + m_Method + " does not support a body!");
+  public AbstractAuthentication auth() {
+    return m_Authentication;
+  }
+
+  /**
+   * Sets the proxy to use.
+   *
+   * @param host	the host, DNS name
+   * @param port 	the port, eg 80
+   * @param scheme 	the scheme, eg http
+   * @return		itself
+   */
+  public Request proxy(String host, int port, String scheme) {
+    m_Proxy = new HttpHost(host, port, scheme);
     return this;
   }
 
   /**
-   * Returns the body to send.
+   * Sets the proxy to use.
    *
-   * @return		the body (string or byte array)
+   * @param value	the proxy, null to unset proxy
+   * @return		itself
+   */
+  public Request proxy(HttpHost value) {
+    m_Proxy = value;
+    return this;
+  }
+
+  /**
+   * Unsets the proxy in use.
+   *
+   * @return		itself
+   */
+  public Request noProxy() {
+    m_Proxy = null;
+    return this;
+  }
+
+  /**
+   * Returns the proxy, if any.
+   *
+   * @return		the proxy, null if none set
+   */
+  public HttpHost proxy() {
+    return m_Proxy;
+  }
+
+  /**
+   * The body to send. Uses {@link ContentType#TEXT_PLAIN}.
+   *
+   * @param value	the body
+   * @return		itself
+   */
+  public Request body(String value) {
+    return body(value, ContentType.TEXT_PLAIN);
+  }
+
+  /**
+   * The body to send.
+   *
+   * @param value		the body
+   * @param contentType 	the content type
+   * @return			itself
+   */
+  public Request body(String value, ContentType contentType) {
+    if (!m_Method.hasBody())
+      throw new IllegalArgumentException("Method " + m_Method + " does not support a body!");
+    m_Body = value;
+    m_BodyContentType = contentType;
+    return this;
+  }
+
+  /**
+   * The body to send. Uses {@link ContentType#APPLICATION_OCTET_STREAM}.
+   *
+   * @param value	the body
+   * @return		itself
+   */
+  public Request body(byte[] value) {
+    return body(value, ContentType.APPLICATION_OCTET_STREAM);
+  }
+
+  /**
+   * The body to send.
+   *
+   * @param value	the body
+   * @return		itself
+   */
+  public Request body(byte[] value, ContentType contentType) {
+    if (!m_Method.hasBody())
+      throw new IllegalArgumentException("Method " + m_Method + " does not support a body!");
+    m_Body = value;
+    m_BodyContentType = contentType;
+    return this;
+  }
+
+  /**
+   * Returns the body.
+   *
+   * @return		the body, null if not available
    */
   public Object body() {
     return m_Body;
@@ -321,78 +506,69 @@ public class Request
   }
 
   /**
-   * Sets the authentication to use.
+   * Sets the socket timeout.
    *
-   * @param auth	the authentication, null to turn off
+   * @param value	the timeout in msec, use -1 for default
    * @return		itself
    */
-  public Request auth(AbstractAuthentication auth) {
-    if (auth == null)
-      auth = new NoAuthentication();
-    m_Authentication = auth;
+  public Request socketTimeout(int value) {
+    if (value < 1)
+      value = -1;
+    m_SocketTimeout = value;
     return this;
   }
 
   /**
-   * Returns the current authentication scheme.
-   *
-   * @return		the authentication
+   * Returns the socket timeout.
+   * 
+   * @return		the timeout in msec, -1 for default
    */
-  public AbstractAuthentication auth() {
-    return m_Authentication;
+  public int socketTimeout() {
+    return m_SocketTimeout;
   }
 
   /**
-   * Sets the timeouts.
+   * Sets the connect timeout.
    *
-   * @param connection	the connection timeout, < 0 for default
-   * @param read	the read timeout, < 0 for default
+   * @param value	the timeout in msec, use -1 for default
    * @return		itself
    */
-  public Request timeouts(int connection, int read) {
-    connectionTimeout(connection);
-    readTimeout(read);
+  public Request connectTimeout(int value) {
+    if (value < 1)
+      value = -1;
+    m_ConnectTimeout = value;
     return this;
   }
 
   /**
-   * Sets the connection timeout.
+   * Returns the connect timeout.
+   * 
+   * @return		the timeout in msec, -1 for default
+   */
+  public int connectTimeout() {
+    return m_ConnectTimeout;
+  }
+
+  /**
+   * Sets the connection request timeout.
    *
-   * @param timeout	the timeout in msec, < 0 to use default
+   * @param value	the timeout in msec, use -1 for default
    * @return		itself
    */
-  public Request connectionTimeout(int timeout) {
-    m_ConnectionTimeout = timeout;
+  public Request connectionRequestTimeout(int value) {
+    if (value < 1)
+      value = -1;
+    m_ConnectionRequestTimeout = value;
     return this;
   }
 
   /**
-   * Return the connection timeout.
-   *
-   * @return		the timeout in msec, < 0 to use default
+   * Returns the connection request timeout.
+   * 
+   * @return		the timeout in msec, -1 for default
    */
-  public int connectionTimeout() {
-    return m_ConnectionTimeout;
-  }
-
-  /**
-   * Sets the read timeout.
-   *
-   * @param timeout	the timeout in msec, < 0 to use default
-   * @return		itself
-   */
-  public Request readTimeout(int timeout) {
-    m_ReadTimeout = timeout;
-    return this;
-  }
-
-  /**
-   * Return the read timeout.
-   *
-   * @return		the timeout in msec, < 0 to use default
-   */
-  public int readTimeout() {
-    return m_ReadTimeout;
+  public int connectionRequestTimeout() {
+    return m_ConnectionRequestTimeout;
   }
 
   /**
@@ -435,67 +611,6 @@ public class Request
    */
   public int maxRedirects() {
     return m_MaxRedirects;
-  }
-
-  /**
-   * Sets the proxy to use.
-   *
-   * @param type	the type of proxy
-   * @param server	the server or IP
-   * @param port	the port
-   * @return		itself
-   */
-  public Request proxy(Proxy.Type type, String server, int port) {
-    m_Proxy = new Proxy(type, new InetSocketAddress(server, port));
-    return this;
-  }
-
-  /**
-   * Uses direct connection.
-   *
-   * @return		itself
-   */
-  public Request noProxy() {
-    m_Proxy = null;
-    return this;
-  }
-
-  /**
-   * Returns the currently set proxy.
-   *
-   * @return		the proxy, null if none used
-   */
-  public Proxy proxy() {
-    return m_Proxy;
-  }
-
-  /**
-   * Sets the hostname verifier to use (https only).
-   *
-   * @param verifier	the verifier to use, null to use system default
-   * @return		itself
-   */
-  public Request hostnameVerification(HostnameVerifier verifier) {
-    m_HostnameVerification = verifier;
-    return this;
-  }
-
-  /**
-   * Disables hostname verification (https only).
-   *
-   * @return		itself
-   */
-  public Request disableHostnameVerification() {
-    return hostnameVerification(new NoHostnameVerification());
-  }
-
-  /**
-   * Returns the current hostname verification scheme.
-   *
-   * @return		the scheme, null if none set
-   */
-  public HostnameVerifier hostnameVerification() {
-    return m_HostnameVerification;
   }
 
   /**
@@ -569,6 +684,35 @@ public class Request
   }
 
   /**
+   * Returns whether the status code represents a redirect.
+   *
+   * @param statusCode	the code to check
+   * @return		true if redirect
+   */
+  protected boolean isRedirect(int statusCode) {
+    return (statusCode == HttpURLConnection.HTTP_MOVED_TEMP)
+      || (statusCode == HttpURLConnection.HTTP_MOVED_PERM)
+      || (statusCode == HttpURLConnection.HTTP_SEE_OTHER);
+  }
+
+  /**
+   * Returns whether the client can be closed.
+   *
+   * @param response	the current response, can be null
+   * @return		true if client can be closed
+   */
+  protected boolean canCloseClient(Response response) {
+    boolean	result;
+
+    result = m_CloseClient;
+
+    if (m_AllowRedirects && (response != null) && isRedirect(response.statusCode()))
+      result = (m_RedirectCount >= m_MaxRedirects);
+
+    return result;
+  }
+
+  /**
    * Assembles the full URL.
    *
    * @return		the URL
@@ -583,7 +727,7 @@ public class Request
 
     // collect parameters for URL
     params = new HashMap<>();
-    if (m_Method != POST) {
+    if (m_Method != Method.POST) {
       params.putAll(m_Parameters);
       params.putAll(formData().parameters());
     }
@@ -612,170 +756,156 @@ public class Request
   }
 
   /**
-   * Creates a random boundary string.
+   * Executes the request.
    *
-   * @return		the random boundary string
-   */
-  protected String createBoundary() {
-    String	result;
-    Random rand;
-
-    rand     = new Random();
-    result = Integer.toHexString(rand.nextInt()) + Integer.toHexString(rand.nextInt()) + Integer.toHexString(rand.nextInt());
-
-    return result;
-  }
-
-  /**
-   * Opens the connection.
-   *
-   * @param url		the URL to use
-   * @return		the connection
-   * @throws IOException	if connection fails
-   */
-  protected HttpURLConnection openConnection(URL url) throws IOException {
-    HttpURLConnection 	result;
-    BufferedWriter	writer;
-    String		boundary;
-    boolean		writeBody;
-
-    if (m_Proxy != null)
-      result = (HttpURLConnection) url.openConnection(m_Proxy);
-    else
-      result = (HttpURLConnection) url.openConnection();
-    if ((result instanceof HttpsURLConnection) && (m_HostnameVerification != null))
-      ((HttpsURLConnection) result).setHostnameVerifier(m_HostnameVerification);
-    if (m_ConnectionTimeout >= 0)
-      result.setConnectTimeout(m_ConnectionTimeout);
-    if (m_ReadTimeout >= 0)
-      result.setReadTimeout(m_ReadTimeout);
-    result.setDoInput(true);
-    result.setDoOutput(true);
-    result.setRequestMethod(m_Method.toString());
-    for (String key: m_Headers.keySet())
-      result.setRequestProperty(key, m_Headers.get(key));
-    for (String key: m_Cookies.keySet())
-      result.setRequestProperty("Cookie", key + "=" + m_Cookies.get(key));
-
-    writeBody = false;
-    if (m_Method.hasBody()) {
-      if (m_Method == POST) {
-	if (m_FormData.size() > 0) {
-	  boundary = createBoundary();
-	  result.addRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
-	  writer = new BufferedWriter(new OutputStreamWriter(result.getOutputStream()));
-	  m_FormData.post(result, writer, boundary);
-	  writer.close();
-	}
-	else if (body() != null) {
-	  writeBody = true;
-	}
-      }
-      else {
-	writeBody = (body() != null);
-      }
-    }
-
-    if (writeBody) {
-      if (body() instanceof String) {
-	writer = new BufferedWriter(new OutputStreamWriter(result.getOutputStream()));
-	writer.write((String) body());
-	writer.close();
-      }
-      else if (body() instanceof byte[]) {
-        result.getOutputStream().write((byte[]) body());
-      }
-      else {
-        throw new IllegalStateException("Unhandled body type (expected String or byte[]), found: " + body().getClass());
-      }
-    }
-
-    return result;
-  }
-
-  /**
-   * Gets the connection, handles redirects.
-   *
-   * @param url		the URL to open
-   * @return		the connection
-   * @throws IOException        if opening fails
-   */
-  protected HttpURLConnection getConnection(URL url) throws IOException {
-    HttpURLConnection 	result;
-    int 		status;
-    String 		newURL;
-    int 		redirectCount;
-
-    result = openConnection(url);
-
-    status        = result.getResponseCode();
-    redirectCount = 0;
-
-    while ((status == HttpURLConnection.HTTP_MOVED_TEMP)
-      || (status == HttpURLConnection.HTTP_MOVED_PERM)
-      || (status == HttpURLConnection.HTTP_SEE_OTHER)) {
-
-      if (!m_AllowRedirects)
-	throw new IOException("Received a redirect and no redirects allowed!");
-
-      redirectCount++;
-      if (redirectCount >= m_MaxRedirects)
-	throw new IOException(m_MaxRedirects + " redirects were generated when trying to access " + url);
-
-      newURL = result.getHeaderField("Location");
-      System.out.println("Redirect, trying to open: " + newURL);
-      result = openConnection(new URL(newURL));
-      status = result.getResponseCode();
-    }
-
-    return result;
-  }
-
-  /**
-   * Executes the request and stores the response in memory.
-   *
-   * @return		the generated response
    * @throws Exception	if execution fails
    */
-  public Response execute() throws Exception {
-    return execute(new Response());
+  public BasicResponse execute() throws Exception {
+    return execute(new BasicResponse());
   }
 
   /**
-   * Executes the request, uses the supplied response instance for receiving the data.
+   * Executes the request.
    *
-   * @param response 	the configured response container to use
-   * @return		the generated response
    * @throws Exception	if execution fails
    */
-  public <T extends HttpResponse> T execute(T response) throws Exception {
-    HttpURLConnection	conn;
-    URL 		url;
-    InputStream		in;
-    int			b;
+  protected <T extends Response > T doExecute(T response) throws Exception {
+    HttpRequestBase		request;
+    CloseableHttpResponse	resp;
+    HttpClientContext		context;
+    URL				url;
+    RequestConfig.Builder	configBuilder;
 
+    url = assembleURL();
     try {
-      if (m_URL == null)
-	throw new IllegalStateException("No URL provided!");
+      switch (m_Method) {
+	case GET:
+	  request = new HttpGet(url.toURI());
+	  break;
+	case POST:
+	  request = new HttpPost(url.toURI());
+	  break;
+	case DELETE:
+	  request = new HttpDelete(url.toURI());
+	  break;
+	case PUT:
+	  request = new HttpPut(url.toURI());
+	  break;
+	case HEAD:
+	  request = new HttpHead(url.toURI());
+	  break;
+	case PATCH:
+	  request = new HttpPatch(url.toURI());
+	  break;
+	default:
+	  throw new IllegalStateException("Unsupported method: " + m_Method);
+      }
 
-      m_Authentication.apply(this);
-      url = assembleURL();
-      conn = getConnection(url);
+      configBuilder = null;
 
-      response.init(conn.getResponseCode(), conn.getResponseMessage(), conn.getHeaderFields());
+      // set timeouts
+      if ((m_SocketTimeout != -1) || (m_ConnectTimeout != -1) || (m_ConnectionRequestTimeout != -1)) {
+        if (configBuilder == null)
+	  configBuilder = RequestConfig.custom();
+        if (m_SocketTimeout != -1)
+          configBuilder.setSocketTimeout(m_SocketTimeout);
+        if (m_ConnectTimeout != -1)
+          configBuilder.setConnectTimeout(m_ConnectTimeout);
+        if (m_ConnectionRequestTimeout != -1)
+          configBuilder.setConnectionRequestTimeout(m_ConnectionRequestTimeout);
+      }
 
-      in = conn.getInputStream();
-      while ((b = in.read()) != -1)
-	response.appendBody((byte) b);
-      response.finishBody();
+      // proxy?
+      if (m_Proxy != null) {
+        if (configBuilder == null)
+	  configBuilder = RequestConfig.custom();
+        configBuilder.setProxy(m_Proxy);
+      }
 
-      conn.disconnect();
+      if (configBuilder != null)
+        request.setConfig(configBuilder.build());
+
+      // headers
+      for (String header: headers().keySet())
+        request.addHeader(header, headers().get(header));
+
+      // form data
+      if ((request instanceof HttpPost) && (m_FormData.size() > 0)) {
+	m_FormData.add((HttpPost) request);
+      }
+      else if ((m_Body != null) && (request instanceof HttpEntityEnclosingRequest)) {
+	if (m_Body instanceof String)
+	  ((HttpEntityEnclosingRequest) request).setEntity(new StringEntity((String) m_Body, m_BodyContentType));
+	else if (m_Body instanceof byte[])
+	  ((HttpEntityEnclosingRequest) request).setEntity(new ByteArrayEntity((byte[]) m_Body, m_BodyContentType));
+	else
+	  throw new IllegalStateException("Unhandled body type: " + m_Body.getClass().getName());
+      }
+
+      context = m_Authentication.build(this);
+      if (context == null)
+	resp = client().execute(request);
+      else
+	resp = client().execute(request, context);
+      response.init(resp);
+
+      try {
+	resp.close();
+      }
+      catch (Exception e) {
+        // ignored
+      }
 
       notifyExecutionListeners(new RequestExecutionEvent(this, response));
+
+      return response;
     }
     catch (Throwable t) {
       notifyFailureListeners(new RequestFailureEvent(this, t));
       throw t;
+    }
+    finally {
+      // close any open streams
+      m_FormData.cleanUp();
+
+      // close client?
+      if (canCloseClient(response)) {
+        try {
+          m_Client.close();
+	}
+	catch (Exception e) {
+          // ignored
+	}
+      }
+    }
+  }
+
+  /**
+   * Executes the request.
+   *
+   * @throws Exception	if execution fails
+   */
+  public <T extends Response > T execute(T response) throws Exception {
+    int 		status;
+    String 		newURL;
+
+    response        = doExecute(response);
+    status          = response.statusCode();
+    m_RedirectCount = 0;
+
+    while (isRedirect(status)) {
+      if (!m_AllowRedirects)
+	throw new IOException("Received a redirect and no redirects allowed!");
+
+      m_RedirectCount++;
+      if (m_RedirectCount >= m_MaxRedirects)
+	throw new IOException(m_MaxRedirects + " redirects were generated when trying to access " + m_URL);
+
+      newURL = response.rawResponse().getFirstHeader("Location").getValue();
+      System.out.println("Redirect, trying to open: " + newURL);
+      url(newURL);
+      response = doExecute(response);
+      status   = response.statusCode();
     }
 
     return response;

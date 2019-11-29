@@ -5,9 +5,9 @@
 
 package com.github.fracpete.requests4j.form;
 
-import java.io.BufferedWriter;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.Map;
 
 /**
@@ -41,14 +41,12 @@ public abstract class AbstractParameter {
   }
 
   /**
-   * Writes out the parameter.
+   * Adds the parameter.
    *
-   * @param conn 	the connection in use
-   * @param writer	the writer to use
-   * @param boundary 	the boundary to use
+   * @param multipart   	the multipart to add the parameter to
    * @throws IOException	if writing fails
    */
-  public abstract void post(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException;
+  public abstract void add(MultipartEntityBuilder multipart) throws IOException;
 
   /**
    * Collects the parameters.

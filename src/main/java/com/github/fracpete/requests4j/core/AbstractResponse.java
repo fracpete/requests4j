@@ -5,18 +5,25 @@
 
 package com.github.fracpete.requests4j.core;
 
+import org.apache.http.Header;
+import org.apache.http.client.methods.CloseableHttpResponse;
+
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Ancestor for HTTP responses.
+ * Ancestor for Response classes.
  *
  * @author FracPete (fracpete at waikato dot ac dot nz)
  */
-public abstract class AbstractResponse
-  implements Serializable, HttpResponse {
+public class AbstractResponse
+  implements Serializable, Response {
+
+  /** the raw response. */
+  protected CloseableHttpResponse m_RawResponse;
 
   /** the status code. */
   protected int m_StatusCode;
@@ -27,34 +34,51 @@ public abstract class AbstractResponse
   /** the headers. */
   protected Map<String,List<String>> m_Headers;
 
-  /** the cookies. */
-  protected Cookies m_Cookies;
-
   /**
    * Initializes the response.
    */
   public AbstractResponse() {
+    m_RawResponse   = null;
     m_StatusCode    = 200;
     m_StatusMessage = "";
     m_Headers       = new HashMap<>();
-    m_Cookies       = new Cookies();
   }
 
   /**
    * Initializes the response object.
    *
-   * @param statusCode		the HTTP status code
-   * @param statusMessage	the HTTP status message
-   * @param headers		the received headers
+   * @param response		the response
    */
-  public void init(int statusCode, String statusMessage, Map<String,List<String>> headers) {
-    if (statusMessage == null)
-      statusMessage = "";
+  @Override
+  public void init(CloseableHttpResponse response) {
+    m_RawResponse   = response;
+    m_StatusCode    = response.getStatusLine().getStatusCode();
+    m_StatusMessage = response.getStatusLine().getReasonPhrase();
+    m_Headers.clear();
+    for (Header header: response.getAllHeaders()) {
+      if (!m_Headers.containsKey(header.getName()))
+        m_Headers.put(header.getName(), new ArrayList<>());
+      m_Headers.get(header.getName()).add(header.getValue());
+    }
+  }
 
-    m_StatusCode    = statusCode;
-    m_StatusMessage = statusMessage;
-    m_Headers       = new HashMap<>(headers);
-    m_Cookies       = Cookies.parse(m_Headers);
+  /**
+   * Returns the underlying, raw response.
+   *
+   * @return		the response
+   */
+  @Override
+  public CloseableHttpResponse rawResponse() {
+    return m_RawResponse;
+  }
+
+  /**
+   * Returns the response headers.
+   *
+   * @return		the headers
+   */
+  public Map<String,List<String>> headers() {
+    return m_Headers;
   }
 
   /**
@@ -62,6 +86,7 @@ public abstract class AbstractResponse
    *
    * @return		the code
    */
+  @Override
   public int statusCode() {
     return m_StatusCode;
   }
@@ -71,26 +96,9 @@ public abstract class AbstractResponse
    *
    * @return		the message
    */
+  @Override
   public String statusMessage() {
     return m_StatusMessage;
-  }
-
-  /**
-   * Returns the headers.
-   *
-   * @return		the headers
-   */
-  public Map<String,List<String>> headers() {
-    return m_Headers;
-  }
-
-  /**
-   * Returns the received cookies ("Set-Cookie").
-   *
-   * @return		the cookies
-   */
-  public Cookies cookies() {
-    return m_Cookies;
   }
 
   /**
@@ -98,6 +106,7 @@ public abstract class AbstractResponse
    *
    * @return		true if <400
    */
+  @Override
   public boolean ok() {
     return (statusCode() < 400);
   }
@@ -109,6 +118,6 @@ public abstract class AbstractResponse
    */
   @Override
   public String toString() {
-    return "status code: " + statusCode() + ", status message: " + statusMessage() + ", headers: " + headers();
+    return "status code: " + statusCode() + ", status message: " + statusMessage();
   }
 }

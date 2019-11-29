@@ -6,15 +6,15 @@
 package com.github.fracpete.requests4j.form;
 
 import com.github.fracpete.requests4j.core.MimeTypeHelper;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.tika.mime.MediaType;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.util.Map;
 
 /**
@@ -40,10 +40,9 @@ public class StreamParameter
    *
    * @param name 	the name
    * @param filename 	the filename
-   * @throws IOException	if fails to open FileInputStream
    */
-  public StreamParameter(String name, String filename) throws IOException {
-    this(name, filename, MimeTypeHelper.getMimeType(filename), new FileInputStream(filename));
+  public StreamParameter(String name, String filename) {
+    this(name, filename, MimeTypeHelper.getMimeType(filename), null);
   }
 
   /**
@@ -51,10 +50,9 @@ public class StreamParameter
    *
    * @param name 	the name
    * @param file 	the file
-   * @throws IOException	if fails to open FileInputStream
    */
-  public StreamParameter(String name, File file) throws IOException {
-    this(name, file.getAbsolutePath(), MimeTypeHelper.getMimeType(file), new FileInputStream(file));
+  public StreamParameter(String name, File file) {
+    this(name, file.getAbsolutePath(), MimeTypeHelper.getMimeType(file), null);
   }
 
   /**
@@ -63,7 +61,7 @@ public class StreamParameter
    * @param name 	the name
    * @param file 	the file
    * @param mimeType 	the mimetype
-   * @param stream 	the stream, will get closed automatically
+   * @param stream 	the stream, can be null, caller needs to close
    */
   public StreamParameter(String name, File file, MediaType mimeType, InputStream stream) {
     this(name, file.getAbsolutePath(), mimeType, stream);
@@ -75,7 +73,7 @@ public class StreamParameter
    * @param name 	the name
    * @param filename 	the filename
    * @param mimeType 	the mimetype
-   * @param stream 	the stream, will get closed automatically
+   * @param stream 	the stream, can be null, caller needs to close
    */
   public StreamParameter(String name, String filename, MediaType mimeType, InputStream stream) {
     super(name);
@@ -112,33 +110,24 @@ public class StreamParameter
   }
 
   /**
-   * Writes out the parameter.
+   * Adds the parameter.
    *
-   * @param conn 	the connection in use
-   * @param writer	the writer to use
-   * @param boundary 	the boundary to use
+   * @param multipart   	the multipart to add the parameter to
    * @throws IOException	if writing fails
    */
   @Override
-  public void post(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException {
-    OutputStream 	os;
-    int 		read;
-    byte[] 		buffer;
+  public void add(MultipartEntityBuilder multipart) throws IOException {
+    InputStreamBody 	streambody;
+    FileBody		filebody;
 
-    writer.write("\r\n");
-    writer.write("--" + boundary + "\r\n");
-    writer.write("Content-Disposition: form-data; name=\"" + name() + "\"; filename=\"" + new File(filename()).getName() + "\"\r\n");
-    writer.write("Content-Type: " + mimeType().toString() + "\r\n");
-    writer.write("\r\n");
-    writer.flush();
-
-    os = conn.getOutputStream();
-    buffer = new byte[1024];
-    while ((read = stream().read(buffer)) != -1)
-      os.write(buffer, 0, read);
-    os.flush();
-
-    stream().close();
+    if (m_Stream != null) {
+      streambody = new InputStreamBody(m_Stream, ContentType.create(mimeType().toString()), new File(filename()).getName());
+      multipart.addPart(name(), streambody);
+    }
+    else {
+      filebody = new FileBody(new File(m_Filename), ContentType.create(mimeType().toString()));
+      multipart.addPart(name(), filebody);
+    }
   }
 
   /**

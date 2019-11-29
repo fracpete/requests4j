@@ -5,7 +5,7 @@
 
 package com.github.fracpete.requests4j.event;
 
-import com.github.fracpete.requests4j.core.HttpResponse;
+import com.github.fracpete.requests4j.core.Response;
 import com.github.fracpete.requests4j.core.Request;
 
 import java.util.EventObject;
@@ -19,7 +19,7 @@ public class RequestExecutionEvent
   extends EventObject {
 
   /** the response object. */
-  protected HttpResponse m_Response;
+  protected Response m_Response;
 
   /**
    * Initializes the event.
@@ -28,7 +28,7 @@ public class RequestExecutionEvent
    * @param response 	the assoicated response object
    * @throws IllegalArgumentException if source is null
    */
-  public RequestExecutionEvent(Request request, HttpResponse response) {
+  public RequestExecutionEvent(Request request, Response response) {
     super(request);
     m_Response = response;
   }
@@ -47,7 +47,7 @@ public class RequestExecutionEvent
    *
    * @return		the response
    */
-  public HttpResponse getReponse() {
+  public Response getReponse() {
     return m_Response;
   }
 
@@ -58,7 +58,7 @@ public class RequestExecutionEvent
    * @param <T>		the type of response class to cast to
    * @return		the response
    */
-  public <T extends HttpResponse> T getResponse(Class<T> response) {
+  public <T extends Response> T getResponse(Class<T> response) {
     return (T) m_Response;
   }
 }

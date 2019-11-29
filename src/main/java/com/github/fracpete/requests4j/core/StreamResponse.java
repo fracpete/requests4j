@@ -5,7 +5,9 @@
 
 package com.github.fracpete.requests4j.core;
 
-import java.io.IOException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.tika.io.IOUtils;
+
 import java.io.OutputStream;
 
 /**
@@ -63,25 +65,24 @@ public class StreamResponse
   }
 
   /**
-   * Appends the byte read from the response.
+   * Initializes the response object.
    *
-   * @param b			the byte to append
-   * @throws IOException	if appending failed
+   * @param response		the response
    */
   @Override
-  public void appendBody(byte b) throws IOException {
-    m_OutputStream.write(b);
-  }
+  public void init(CloseableHttpResponse response) {
+    super.init(response);
 
-  /**
-   * Called when all data from the response has been processed.
-   *
-   * @throws IOException	if finishing up fails
-   */
-  public void finishBody() throws IOException {
-    m_OutputStream.flush();
-    if (m_CloseOnFinish)
-      m_OutputStream.close();
+    try {
+      IOUtils.copy(response.getEntity().getContent(), m_OutputStream);
+    }
+    catch (Exception e) {
+      // TODO error message?
+    }
+    finally {
+      if (m_CloseOnFinish)
+        IOUtils.closeQuietly(m_OutputStream);
+    }
   }
 
   /**

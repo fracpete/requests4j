@@ -5,14 +5,17 @@
 
 package com.github.fracpete.requests4j.form;
 
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.tika.mime.MediaType;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,11 +26,15 @@ import java.util.Map;
 public class FormData
   extends HashMap<String,AbstractParameter> {
 
+  /** the list of streams to clean up. */
+  protected List<InputStream> m_Streams;
+
   /**
    * Initializes empty form data.
    */
   public FormData() {
     super();
+    m_Streams = new ArrayList<>();
   }
 
   /**
@@ -105,6 +112,7 @@ public class FormData
    * @return		itself
    */
   public FormData addStream(String name, File file, MediaType mimetype, InputStream stream) throws IOException {
+    m_Streams.add(stream);
     return add(new StreamParameter(name, file, mimetype, stream));
   }
 
@@ -118,21 +126,25 @@ public class FormData
    * @return		itself
    */
   public FormData addStream(String name, String filename, MediaType mimetype, InputStream stream) throws IOException {
+    m_Streams.add(stream);
     return add(new StreamParameter(name, filename, mimetype, stream));
   }
 
   /**
-   * Writes out the parameters.
+   * Adds the parameter.
    *
-   * @param conn 	the connection in use
-   * @param writer	the writer to use
-   * @param boundary 	the boundary to use
+   * @param post   		the request to add the form data to
    * @throws IOException	if writing fails
    */
-  public void post(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException {
+  public void add(HttpPost post) throws IOException {
+    MultipartEntityBuilder	builder;
+
     if (size() > 0) {
+      builder = MultipartEntityBuilder.create();
+      builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
       for (String key : keySet())
-	get(key).post(conn, writer, boundary);
+	get(key).add(builder);
+      post.setEntity(builder.build());
     }
   }
 
@@ -149,5 +161,19 @@ public class FormData
 	result.putAll(get(key).parameters());
 
     return result;
+  }
+
+  /**
+   * Closes all the streams.
+   */
+  public void cleanUp() {
+    for (InputStream stream: m_Streams) {
+      try {
+        stream.close();
+      }
+      catch (Exception e) {
+        // ignored
+      }
+    }
   }
 }

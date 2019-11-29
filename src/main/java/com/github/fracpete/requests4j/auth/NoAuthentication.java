@@ -6,6 +6,7 @@
 package com.github.fracpete.requests4j.auth;
 
 import com.github.fracpete.requests4j.core.Request;
+import org.apache.http.client.protocol.HttpClientContext;
 
 /**
  * Dummy, does nothing.
@@ -16,12 +17,13 @@ public class NoAuthentication
   extends AbstractAuthentication {
 
   /**
-   * Updates the request to include authentication.
+   * Generates the context for the client.
    *
    * @param request	the request to update
-   * @throws Exception  if updating fails
+   * @return 		the generated context
+   * @throws Exception  if context generation fails
    */
-  @Override
-  public void apply(Request request) throws Exception {
+  public HttpClientContext build(Request request) throws Exception {
+    return null;
   }
 }

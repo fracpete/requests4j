@@ -5,9 +5,11 @@
 
 package com.github.fracpete.requests4j.form;
 
-import java.io.BufferedWriter;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.StringBody;
+
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,20 +47,14 @@ public class StringParameter
   }
 
   /**
-   * Writes out the parameter.
+   * Adds the parameter.
    *
-   * @param conn 	the connection in use
-   * @param writer	the writer to use
-   * @param boundary 	the boundary to use
+   * @param multipart   	the multipart to add the parameter to
    * @throws IOException	if writing fails
    */
   @Override
-  public void post(HttpURLConnection conn, BufferedWriter writer, String boundary) throws IOException {
-    writer.write("\r\n");
-    writer.write("--" + boundary + "\r\n");
-    writer.write("Content-Disposition: form-data; name=\"" + name() + "\"\r\n");
-    writer.write("\r\n");
-    writer.write(value());
+  public void add(MultipartEntityBuilder multipart) throws IOException {
+    multipart.addPart(name(), new StringBody(value(), ContentType.MULTIPART_FORM_DATA));
   }
 
   /**

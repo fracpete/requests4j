@@ -6,10 +6,13 @@
 package com.github.fracpete.requests4j.auth;
 
 import com.github.fracpete.requests4j.core.Request;
-import gnu.trove.list.TByteList;
-import gnu.trove.list.array.TByteArrayList;
-
-import java.util.Base64;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
 
 /**
  * Updates the headers with basic authorization.
@@ -37,29 +40,28 @@ public class BasicAuthentication
   }
 
   /**
-   * Generates the authentication string.
-   *
-   * @return		the generated string
-   * @throws Exception	if decoding of user/password as latin1 fails
-   */
-  protected String generate() throws Exception {
-    TByteList buffer;
-
-    buffer = new TByteArrayList();
-    buffer.addAll(m_User.getBytes("latin1"));
-    buffer.addAll(":".getBytes("latin1"));
-    buffer.addAll(m_Password.getBytes("latin1"));
-    return "Basic " + new String(Base64.getEncoder().encode(buffer.toArray()));
-  }
-
-  /**
-   * Updates the request to include authentication.
+   * Generates the context for the client.
    *
    * @param request	the request to update
-   * @throws Exception  if updating fails
+   * @return 		the generated context
+   * @throws Exception  if context generation fails
    */
-  @Override
-  public void apply(Request request) throws Exception {
-    request.header("Authorization", generate());
+  public HttpClientContext build(Request request) throws Exception {
+    HttpClientContext 	result;
+    HttpHost  		host;
+    AuthCache 		authCache;
+    BasicScheme 	basicAuth;
+
+    host = HttpHost.create(request.url().getHost());
+    request.credentials().setCredentials(
+      new AuthScope(host.getHostName(), host.getPort()),
+      new UsernamePasswordCredentials(m_User, m_Password));
+    authCache = new BasicAuthCache();
+    basicAuth = new BasicScheme();
+    authCache.put(host, basicAuth);
+    result = HttpClientContext.create();
+    result.setAuthCache(authCache);
+
+    return result;
   }
 }

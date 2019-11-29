@@ -3,7 +3,7 @@
  * Copyright (C) 2019 University of Waikato, Hamilton, NZ
  */
 
-package com.github.fracpete.requests4j.v2.core;
+package com.github.fracpete.requests4j.core;
 
 import gnu.trove.list.TByteList;
 import gnu.trove.list.array.TByteArrayList;
@@ -47,6 +47,7 @@ public class BasicResponse
 
     super.init(response);
 
+    m_Body.clear();
     if (response.getEntity() != null) {
       try {
 	in = response.getEntity().getContent();

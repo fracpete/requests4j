@@ -5,11 +5,16 @@ Not as feature rich, but it gets a lot done.
 ## Why yet another Java HTTP client library? 
 [JSoup](https://jsoup.org/) was missing some functionality that I needed and 
 the [Apache HttpClient](http://hc.apache.org/httpcomponents-client-ga/)
-library seemed a bit too cumbersome to use. Instead, I reused functionality
+library seemed a bit too cumbersome to use. Initially, I reused functionality
 that I had written for my [ADAMS](https://adams.cms.waikato.ac.nz/) framework
 over the years and turned it into a separate library, taking
 the [requests](https://2.python-requests.org/en/master/) API as model to make
-this library easy to use.
+this library easy to use. 
+
+## API Changes
+Version 0.1.0 swapped out the underlying code, now using 
+[Apache's HttpClient](http://hc.apache.org/httpcomponents-client-ga/) for doing 
+the actual work. 
 
 
 ## Usage
@@ -63,12 +68,12 @@ of the form data:
 
 ```java
 import com.github.fracpete.requests4j.Requests;
-import com.github.fracpete.requests4j.core.Response;
+import com.github.fracpete.requests4j.core.BasicResponse;
 import com.github.fracpete.requests4j.form.FormData;
 
 public class FormUpload {
   public static void main(String[] args) throws Exception {
-    Response r = Requests.post("http://some.server.com/upload")
+    BasicResponse r = Requests.post("http://some.server.com/upload")
       .formData(
         new FormData()
           .addFile("file", "/some/where/important.doc")
@@ -84,14 +89,14 @@ public class FormUpload {
 
 ### Execute and response
 Once fully configured, you can execute a request with the `execute()` method,
-which will either fail with an exception or return a `Response` object (package 
+which will either fail with an exception or return a `BasicResponse` object (package 
 `com.github.fracpete.requests4j.core`).
 
-With a `Response` object, you have access to:
+With a `BasicResponse` object, you have access to:
 * HTTP status code -- `statusCode()`
 * HTTP status message -- `statusMessage()`
 * HTTP headers -- `headers()`
-* Cookies -- `cookies()` (parsed from the `Set-Cookie` headers)
+* raw HTTPClient response -- `rawResponse()`
 * the body of the response
   * the raw byte array -- `body()`
   * as (UTF-8) text -- `text()`
@@ -111,12 +116,12 @@ subsequent request.
 ```java
 import com.github.fracpete.requests4j.Requests;
 import com.github.fracpete.requests4j.Session;
-import com.github.fracpete.requests4j.core.FileResponse;
+import com.github.fracpete.requests4j.core.BasicResponse;
 
 public class SessionExample {
   public static void main(String[] args) {
     Session session = new Session();
-    Response login = session.post("http://some.server.com/login")
+    BasicResponse login = session.post("http://some.server.com/login")
       .formData(
         new FormData()
           .add("user", "myuser")
@@ -124,7 +129,7 @@ public class SessionExample {
       )
       .execute();
     if (login.ok()) {
-      Response action = session.get("http://some.server.com/somethingelse")
+      BasicResponse action = session.get("http://some.server.com/somethingelse")
         .execute();
       System.out.println(action.text());
     }
@@ -136,19 +141,19 @@ public class SessionExample {
 
 ## Advanced usage
 ### Different response objects
-The `Response` object simply stores the received data in memory, which is fine
+The `BasicResponse` object simply stores the received data in memory, which is fine
 for receiving HTML pages or small binary objects. However, for downloading
 large binary files, it is recommended to use one of the following response
 classes instead (package `com.github.fracpete.requests4j.core`):
 * `FileResponse` - streams the incoming data straight to the specified output file
 * `StreamResponse` - uses the supplied `java.io.OutputStream` to forward the incoming data to  
 
-Each of these classes implements the `HttpResponse` interface that all response
+Each of these classes implements the `Response` interface that all response
 classes share, giving you access to the following methods:
 * HTTP status code -- `statusCode()`
 * HTTP status message -- `statusMessage()`
 * HTTP headers -- `headers()`
-* Cookies -- `cookies()` (parsed from the `Set-Cookie` headers)
+* raw HTTPClient response -- `rawResponse()`
 
 Instead of using the `execute()` method, you now use the `execute(HttpResponse)` 
 method, supplying the fully configured response object. The following example
@@ -174,11 +179,11 @@ In that case, you can use `BasicAuthentication` to provide these credentials:
 ```java
 import com.github.fracpete.requests4j.Requests;
 import com.github.fracpete.requests4j.auth.BasicAuthentication;
-import com.github.fracpete.requests4j.core.Response;
+import com.github.fracpete.requests4j.core.BasicResponse;
 
 public class Auth {
   public static void main(String[] args) throws Exception {
-    Response r = Requests.get("http://some.server.com/")
+    BasicResponse r = Requests.get("http://some.server.com/")
       .auth(new BasicAuthentication("USER", "PASSWORD"))
       .execute();
   }
@@ -196,7 +201,7 @@ The following example downloads a Weka zip file from sourceforge.net:
 ```java
 public class Redirect {
   public static void main(String[] args) throws Exception {
-    Response r = Requests.get("http://sourceforge.net/projects/weka/files/weka-3-9/3.9.3/weka-3-9-3.zip/download")
+    BasicResponse r = Requests.get("http://sourceforge.net/projects/weka/files/weka-3-9/3.9.3/weka-3-9-3.zip/download")
       .allowRedirects(true)
       .execute();
   }
@@ -214,23 +219,12 @@ import java.net.Proxy;
 
 public class Redirect {
   public static void main(String[] args) throws Exception {
-    Response r = Requests.get("http://some.server.com/")
-      .proxy(Proxy.Type.HTTP, "proxy.domain.com", 80)
+    BasicResponse r = Requests.get("http://some.server.com/")
+      .proxy("proxy.domain.com", 80, "http")
       .execute();
   }
 }
 ```
-
-
-### Hostname verification
-In certain cases, like development phase, it may be necessary to change Java's 
-default hostname verification for https connections. This is possible using
-the `hostnameVerification(javax.net.ssl.HostnameVerifier)` or `disableHostnameVerification()`
-methods. The following pre-built verification schemes are available (package 
-`com.github.fracpete.requests4j.ssl`):
-* `LocahostVerification` - localhost/127.0.0.1 always succeeds
-* `NoHostnameVerification` - always succeeds
-* `RegExpHostnameVerification` - matches the hostname against a regular expression 
 
 
 ## Examples

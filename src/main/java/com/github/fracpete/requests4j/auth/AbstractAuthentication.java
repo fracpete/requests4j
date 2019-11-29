@@ -6,6 +6,7 @@
 package com.github.fracpete.requests4j.auth;
 
 import com.github.fracpete.requests4j.core.Request;
+import org.apache.http.client.protocol.HttpClientContext;
 
 import java.io.Serializable;
 
@@ -18,10 +19,11 @@ public abstract class AbstractAuthentication
   implements Serializable {
 
   /**
-   * Updates the request to include authentication.
+   * Generates the context for the client.
    *
    * @param request	the request to update
-   * @throws Exception  if updating fails
+   * @return 		the generated context
+   * @throws Exception  if context generation fails
    */
-  public abstract void apply(Request request) throws Exception;
+  public abstract HttpClientContext build(Request request) throws Exception;
 }

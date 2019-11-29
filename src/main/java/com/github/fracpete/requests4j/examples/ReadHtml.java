@@ -6,7 +6,7 @@
 package com.github.fracpete.requests4j.examples;
 
 import com.github.fracpete.requests4j.Requests;
-import com.github.fracpete.requests4j.core.Response;
+import com.github.fracpete.requests4j.core.BasicResponse;
 
 /**
  * Just reads an HTML page (stores response in memory) and outputs the HTML on stdout.
@@ -16,11 +16,11 @@ import com.github.fracpete.requests4j.core.Response;
 public class ReadHtml {
 
   public static void main(String[] args) throws Exception {
-    Response r = Requests.get("http://github.com/")
+    BasicResponse r = Requests.get("http://github.com/")
       .allowRedirects(true)
       .execute();
     System.out.println("Response: " + r);
-    System.out.println("Cookies: " + r.cookies());
+    System.out.println(r.headers());
     System.out.println(r.text());
   }
 }
