@@ -34,7 +34,7 @@ initializing the URL straight away. Otherwise, you need to set the URL via
 the `url(String)` or `url(java.net.URL)` method. 
 
 Calling one the request methods will generate an instance of the `Request` 
-class (package `com.github.fracpete.requests4j.core`). This class supports
+class (package `com.github.fracpete.requests4j.request`). This class supports
 daisy-chaining to make it easy to configure a full request with minimal code 
 to write.
 
