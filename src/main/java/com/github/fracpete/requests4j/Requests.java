@@ -13,6 +13,7 @@ import java.net.URL;
 import static com.github.fracpete.requests4j.request.Method.DELETE;
 import static com.github.fracpete.requests4j.request.Method.GET;
 import static com.github.fracpete.requests4j.request.Method.HEAD;
+import static com.github.fracpete.requests4j.request.Method.OPTIONS;
 import static com.github.fracpete.requests4j.request.Method.PATCH;
 import static com.github.fracpete.requests4j.request.Method.POST;
 import static com.github.fracpete.requests4j.request.Method.PUT;
@@ -167,6 +168,35 @@ public class Requests {
    */
   public static Request head(URL url) {
     return head().url(url);
+  }
+
+  /**
+   * Instantiates a new OPTIONS request.
+   *
+   * @return		the request
+   */
+  public static Request options() {
+    return new Request(OPTIONS);
+  }
+
+  /**
+   * Instantiates a new OPTIONS request.
+   *
+   * @param url 	the URL to contact
+   * @return		the request
+   */
+  public static Request options(String url) throws MalformedURLException {
+    return options().url(url);
+  }
+
+  /**
+   * Instantiates a new OPTIONS request.
+   *
+   * @param url 	the URL to contact
+   * @return		the request
+   */
+  public static Request options(URL url) {
+    return options().url(url);
   }
 
   /**

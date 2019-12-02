@@ -259,6 +259,35 @@ public class Session
   }
 
   /**
+   * Instantiates a new OPTIONS request.
+   *
+   * @return		the request
+   */
+  public Request options() {
+    return process(Requests.options());
+  }
+
+  /**
+   * Instantiates a new OPTIONS request.
+   *
+   * @param url 	the URL to contact
+   * @return		the request
+   */
+  public Request options(String url) throws MalformedURLException {
+    return process(Requests.options(url));
+  }
+
+  /**
+   * Instantiates a new OPTIONS request.
+   *
+   * @param url 	the URL to contact
+   * @return		the request
+   */
+  public Request options(URL url) {
+    return process(Requests.options(url));
+  }
+
+  /**
    * Instantiates a new DELETE request.
    *
    * @return		the request

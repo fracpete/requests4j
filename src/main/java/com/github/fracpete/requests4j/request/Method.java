@@ -16,7 +16,8 @@ public enum Method {
   PUT(true),
   PATCH(true),
   HEAD(false),
-  DELETE(false);
+  DELETE(false),
+  OPTIONS(false);
 
   /** whether it supports a body. */
   private boolean m_Body;

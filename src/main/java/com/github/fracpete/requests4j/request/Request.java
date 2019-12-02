@@ -23,6 +23,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -798,6 +799,9 @@ public class Request
 	  break;
 	case PATCH:
 	  request = new HttpPatch(url.toURI());
+	  break;
+	case OPTIONS:
+	  request = new HttpOptions(url.toURI());
 	  break;
 	default:
 	  throw new IllegalStateException("Unsupported method: " + m_Method);
