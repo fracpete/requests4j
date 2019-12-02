@@ -27,6 +27,7 @@ The following methods are supported through the `com.github.fracpete.requests4j.
 * PUT -- `Requests.put()`
 * PATCH -- `Requests.patch()`
 * HEAD -- `Requests.head()`
+* OPTIONS -- `Requests.options()`
 * DELETE -- `Requests.delete()`
 
 The above mentioned methods can also take a URL string or a `java.net.URL` object,
@@ -241,6 +242,6 @@ Use the following dependency in your `pom.xml`:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>requests4j</artifactId>
-      <version>0.1.0</version>
+      <version>0.1.1</version>
     </dependency>
 ```
