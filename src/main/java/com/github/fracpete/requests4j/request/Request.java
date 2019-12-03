@@ -894,6 +894,7 @@ public class Request
   public <T extends Response > T execute(T response) throws Exception {
     int 		status;
     String 		newURL;
+    String 		server;
 
     response        = doExecute(response);
     status          = response.statusCode();
@@ -908,6 +909,13 @@ public class Request
 	throw new IOException(m_MaxRedirects + " redirects were generated when trying to access " + m_URL);
 
       newURL = response.rawResponse().getFirstHeader("Location").getValue();
+      // relative redirect?
+      if (newURL.startsWith("/")) {
+        server = m_URL.getProtocol() + "://" + m_URL.getHost();
+        if (m_URL.getPort() != -1)
+          server += ":" + m_URL.getPort();
+        newURL = server + newURL;
+      }
       System.out.println("Redirect, trying to open: " + newURL);
       url(newURL);
       response = doExecute(response);
