@@ -1,10 +1,11 @@
 /*
  * Request.java
- * Copyright (C) 2019 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2019-2020 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.requests4j.request;
 
+import com.github.fracpete.requests4j.attachment.AbstractAttachment;
 import com.github.fracpete.requests4j.auth.AbstractAuthentication;
 import com.github.fracpete.requests4j.auth.NoAuthentication;
 import com.github.fracpete.requests4j.event.RequestExecutionEvent;
@@ -92,6 +93,9 @@ public class Request
 
   /** the form data. */
   protected FormData m_FormData;
+
+  /** the attachment. */
+  protected AbstractAttachment m_Attachment;
 
   /** the body content type. */
   protected ContentType m_BodyContentType;
@@ -509,6 +513,26 @@ public class Request
   }
 
   /**
+   * Attaches the specified data.
+   *
+   * @param data	the attachment
+   * @return		itself
+   */
+  public Request attachment(AbstractAttachment data) {
+    m_Attachment = data;
+    return this;
+  }
+
+  /**
+   * Returns any attachment.
+   *
+   * @return		the attachment, null if none set
+   */
+  public AbstractAttachment attachment() {
+    return m_Attachment;
+  }
+
+  /**
    * Sets the socket timeout.
    *
    * @param value	the timeout in msec, use -1 for default
@@ -838,6 +862,10 @@ public class Request
       // form data
       if ((request instanceof HttpPost) && (m_FormData.size() > 0)) {
 	m_FormData.add((HttpPost) request);
+      }
+      else if ((request instanceof HttpPost) && (m_Attachment != null) && m_Attachment.isValid()) {
+        request.addHeader("Content-Disposition", m_Attachment.getContentDisposition());
+	((HttpPost) request).setEntity(m_Attachment.getEntity());
       }
       else if ((m_Body != null) && (request instanceof HttpEntityEnclosingRequest)) {
 	if (m_Body instanceof String)

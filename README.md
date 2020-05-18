@@ -87,6 +87,36 @@ public class FormUpload {
 }
 ```
 
+### Posting data
+You can easily *post* a single file or data (i.e., byte array) using the `attachment(AbstractAttachment)`
+method. Available attachment types (package `com.github.fracpete.requests4j.attachment`) are:
+* `ByteArrayAttachment`  
+* `FileAttachment`
+
+Such an attachment will add a `Content-Disposition` header to the request:
+* `ByteArrayAttachment`: `attachment`
+* `FileAttachment`: `attachment; filename=NAME`
+
+The following example posts the file supplied as command-line argument:
+
+```java
+import com.github.fracpete.requests4j.Requests;
+import com.github.fracpete.requests4j.response.BasicResponse;
+import com.github.fracpete.requests4j.attachment.FileAttachment;
+import java.io.File;
+
+public class PostData {
+  public static void main(String[] args) throws Exception {
+    File f = new File(args[0]);
+    BasicResponse r = Requests.post("http://some.server.com/")
+      .attachment(new FileAttachment(f))
+      .execute();
+    System.out.printnl(r);
+  }
+}
+```
+
+
 
 ### Execute and response
 Once fully configured, you can execute a request with the `execute()` method,
@@ -242,6 +272,6 @@ Use the following dependency in your `pom.xml`:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>requests4j</artifactId>
-      <version>0.1.1</version>
+      <version>0.1.3</version>
     </dependency>
 ```
