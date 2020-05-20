@@ -45,8 +45,10 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -86,7 +88,7 @@ public class Request
   protected Map<String,String> m_Headers;
 
   /** the parameters. */
-  protected Map<String,String> m_Parameters;
+  protected Map<String,Object> m_Parameters;
 
   /** the body string to send. */
   protected Object m_Body;
@@ -350,12 +352,24 @@ public class Request
   }
 
   /**
+   * Adds the query parameter.
+   *
+   * @param name	the name
+   * @param value	the list of values
+   * @return		itself
+   */
+  public Request parameter(String name, List<String> value) {
+    m_Parameters.put(name, value);
+    return this;
+  }
+
+  /**
    * Adds all the query parameters.
    *
    * @param parameters	the parameters
    * @return		itself
    */
-  public Request parameters(Map<String,String> parameters) {
+  public Request parameters(Map<String,Object> parameters) {
     m_Parameters.putAll(parameters);
     return this;
   }
@@ -365,7 +379,7 @@ public class Request
    *
    * @return		the parameters
    */
-  public Map<String,String> parameters() {
+  public Map<String,Object> parameters() {
     return m_Parameters;
   }
 
@@ -747,10 +761,12 @@ public class Request
    */
   protected URL assembleURL() throws Exception {
     URL 		result;
-    Map<String,String>	params;
+    Map<String,Object>	params;
     StringBuilder	url;
     int			i;
     String		enc;
+    Object		value;
+    List		list;
 
     // collect parameters for URL
     params = new HashMap<>();
@@ -768,10 +784,20 @@ public class Request
           url.append("?");
         else
           url.append("&");
-        url.append(URLEncoder.encode(key, enc));
-        url.append("=");
-        url.append(URLEncoder.encode(params.get(key), enc));
-        i++;
+        value = params.get(key);
+        if (value instanceof List) {
+          list = (List) value;
+	}
+	else {
+          list = new ArrayList();
+          list.add(value);
+	}
+	for (Object item: list) {
+	  url.append(URLEncoder.encode(key, enc));
+	  url.append("=");
+	  url.append(URLEncoder.encode("" + item, enc));
+	  i++;
+	}
       }
       result = new URL(url.toString());
     }
