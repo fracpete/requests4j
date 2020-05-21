@@ -47,8 +47,12 @@ You can set custom HTTP headers using the following methods:
 
 Similarly, you can set parameters, eg to be encoded in the URL for `GET` 
 requests, using the following methods:
-* `parameter(String,String)` -- setting a single parameter, name and value
-* `parameter(Map<String,String>)` -- setting multiple parameters at once
+* `parameter(String,String)` -- setting a single parameter, name and value.
+* `parameter(String,String[])` or `parameter(String,List)` -- setting 
+  multiple string values for the parameter.
+* `parameters(Map<String,Object>)` -- setting multiple parameters at once, 
+  ensures that the values of the map only contain `String`, `String[]` 
+  or `java.util.List`.
 
 
 ### HTML forms
