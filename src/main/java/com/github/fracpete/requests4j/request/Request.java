@@ -368,17 +368,22 @@ public class Request
    * Adds the query parameter.
    *
    * @param name	the name
-   * @param values	the list of values
+   * @param values	the list of values (automatically get converted to String)
    * @return		itself
    */
-  public Request parameter(String name, List<String> values) {
-    m_Parameters.put(name, values);
+  public Request parameter(String name, List values) {
+    List<String>	strValues;
+
+    strValues = new ArrayList<>();
+    for (Object value: values)
+      strValues.add("" + value);
+    m_Parameters.put(name, strValues);
     return this;
   }
 
   /**
    * Adds all the query parameters.
-   * Values in the map can only be String or List<String>.
+   * Values in the map can only be String, String[] or List<String>.
    *
    * @param parameters	the parameters
    * @return		itself
@@ -389,11 +394,14 @@ public class Request
     for (String key: parameters.keySet()) {
       value = parameters.get(key);
       if (value instanceof String)
-	m_Parameters.put(key, value);
+	parameter(key, (String) value);
+      else if (value instanceof String[])
+	parameter(key, (String[]) value);
       else if (value instanceof List)
-	m_Parameters.put(key, value);
+	parameter(key, (List) value);
       else
-        System.err.println("Value of parameter '" + key + "' neither String nor List: " + value.getClass().getName());
+        System.err.println("Value of parameter '" + key + "' should be "
+	  + "String, String[] or List, but found: " + value.getClass().getName());
     }
     return this;
   }
