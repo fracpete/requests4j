@@ -46,6 +46,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -355,27 +356,50 @@ public class Request
    * Adds the query parameter.
    *
    * @param name	the name
-   * @param value	the list of values
+   * @param values	the values
    * @return		itself
    */
-  public Request parameter(String name, List<String> value) {
-    m_Parameters.put(name, value);
+  public Request parameter(String name, String[] values) {
+    m_Parameters.put(name, Arrays.asList(values));
+    return this;
+  }
+
+  /**
+   * Adds the query parameter.
+   *
+   * @param name	the name
+   * @param values	the list of values
+   * @return		itself
+   */
+  public Request parameter(String name, List<String> values) {
+    m_Parameters.put(name, values);
     return this;
   }
 
   /**
    * Adds all the query parameters.
+   * Values in the map can only be String or List<String>.
    *
    * @param parameters	the parameters
    * @return		itself
    */
   public Request parameters(Map<String,Object> parameters) {
-    m_Parameters.putAll(parameters);
+    Object 	value;
+
+    for (String key: parameters.keySet()) {
+      value = parameters.get(key);
+      if (value instanceof String)
+	m_Parameters.put(key, value);
+      else if (value instanceof List)
+	m_Parameters.put(key, value);
+      else
+        System.err.println("Value of parameter '" + key + "' neither String nor List: " + value.getClass().getName());
+    }
     return this;
   }
 
   /**
-   * Returns the current query parameters.
+   * Returns the current query parameters (the values are either String or List<String>).
    *
    * @return		the parameters
    */
