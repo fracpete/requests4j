@@ -8,6 +8,7 @@ package com.github.fracpete.requests4j.request;
 import com.github.fracpete.requests4j.attachment.AbstractAttachment;
 import com.github.fracpete.requests4j.auth.AbstractAuthentication;
 import com.github.fracpete.requests4j.auth.NoAuthentication;
+import com.github.fracpete.requests4j.core.Resendable;
 import com.github.fracpete.requests4j.event.RequestExecutionEvent;
 import com.github.fracpete.requests4j.event.RequestExecutionListener;
 import com.github.fracpete.requests4j.event.RequestFailureEvent;
@@ -59,7 +60,7 @@ import java.util.Set;
  * @author FracPete (fracpete at waikato dot ac dot nz)
  */
 public class Request
-  implements Serializable {
+  implements Serializable, Resendable {
 
   /** the method to use. */
   protected Method m_Method;
@@ -781,6 +782,23 @@ public class Request
 
     if (m_AllowRedirects && (response != null) && isRedirect(response.statusCode()))
       result = (m_RedirectCount >= m_MaxRedirects);
+
+    return result;
+  }
+
+  /**
+   * Returns true if the object can resend its data.
+   *
+   * @return		true if can be resent
+   */
+  @Override
+  public boolean canResend() {
+    boolean	result;
+
+    result = m_FormData.canResend();
+
+    if (result && (m_Attachment != null))
+      result = m_Attachment.canResend();
 
     return result;
   }

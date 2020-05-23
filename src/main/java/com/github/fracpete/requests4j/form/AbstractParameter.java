@@ -5,6 +5,7 @@
 
 package com.github.fracpete.requests4j.form;
 
+import com.github.fracpete.requests4j.core.Resendable;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 
 import java.io.IOException;
@@ -15,7 +16,8 @@ import java.util.Map;
  *
  * @author FracPete (fracpete at waikato dot ac dot nz)
  */
-public abstract class AbstractParameter {
+public abstract class AbstractParameter
+  implements Resendable {
 
   /** the parameter name. */
   public String m_Name;

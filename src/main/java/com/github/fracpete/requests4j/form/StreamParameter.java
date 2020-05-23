@@ -83,6 +83,16 @@ public class StreamParameter
   }
 
   /**
+   * Returns true if the object can resend its data.
+   *
+   * @return		true if can be resent
+   */
+  @Override
+  public boolean canResend() {
+    return false;
+  }
+
+  /**
    * Returns the filename.
    *
    * @return		the filename

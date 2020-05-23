@@ -5,6 +5,7 @@
 
 package com.github.fracpete.requests4j.form;
 
+import com.github.fracpete.requests4j.core.Resendable;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -24,7 +25,8 @@ import java.util.Map;
  * @author FracPete (fracpete at waikato dot ac dot nz)
  */
 public class FormData
-  extends HashMap<String,AbstractParameter> {
+  extends HashMap<String,AbstractParameter>
+  implements Resendable {
 
   /** the list of streams to clean up. */
   protected List<InputStream> m_Streams;
@@ -159,6 +161,26 @@ public class FormData
     result = new HashMap<>();
       for (String key : keySet())
 	result.putAll(get(key).parameters());
+
+    return result;
+  }
+
+  /**
+   * Returns true if the object can resend its data.
+   *
+   * @return		true if can be resent
+   */
+  @Override
+  public boolean canResend() {
+    boolean	result;
+
+    result = true;
+
+    for (String key: keySet()) {
+      result = get(key).canResend();
+      if (!result)
+        break;
+    }
 
     return result;
   }

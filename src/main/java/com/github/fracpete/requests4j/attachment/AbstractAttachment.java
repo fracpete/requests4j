@@ -5,6 +5,7 @@
 
 package com.github.fracpete.requests4j.attachment;
 
+import com.github.fracpete.requests4j.core.Resendable;
 import org.apache.http.HttpEntity;
 
 import java.io.Serializable;
@@ -15,7 +16,7 @@ import java.io.Serializable;
  * @author FracPete (fracpete at waikato dot ac dot nz)
  */
 public abstract class AbstractAttachment
-  implements Serializable {
+  implements Serializable, Resendable {
 
   /**
    * Returns whether the attachment is correctly configured.

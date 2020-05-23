@@ -64,6 +64,16 @@ public class FileAttachment
   }
 
   /**
+   * Returns true if the object can resend its data.
+   *
+   * @return		true if can be resent
+   */
+  @Override
+  public boolean canResend() {
+    return true;
+  }
+
+  /**
    * Returns the file.
    *
    * @return		the file
