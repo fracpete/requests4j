@@ -89,7 +89,7 @@ public class StreamParameter
    */
   @Override
   public boolean canResend() {
-    return false;
+    return (m_Stream == null);
   }
 
   /**
