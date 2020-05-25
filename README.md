@@ -28,7 +28,8 @@ The following methods are supported through the `com.github.fracpete.requests4j.
 * PATCH -- `Requests.patch()`
 * HEAD -- `Requests.head()`
 * OPTIONS -- `Requests.options()`
-* DELETE -- `Requests.delete()`
+* DELETE -- `Requests.delete()` (also supports sending a payload, though this is not 
+  recommended by [RFC 7231, section 4.3.5](https://tools.ietf.org/html/rfc7231#section-4.3.5))
 
 The above mentioned methods can also take a URL string or a `java.net.URL` object,
 initializing the URL straight away. Otherwise, you need to set the URL via 
@@ -276,6 +277,6 @@ Use the following dependency in your `pom.xml`:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>requests4j</artifactId>
-      <version>0.1.5</version>
+      <version>0.1.6</version>
     </dependency>
 ```

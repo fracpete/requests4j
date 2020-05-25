@@ -1,6 +1,6 @@
 /*
  * Method.java
- * Copyright (C) 2019 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2019-2020 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.requests4j.request;
@@ -16,7 +16,7 @@ public enum Method {
   PUT(true),
   PATCH(true),
   HEAD(false),
-  DELETE(false),
+  DELETE(true),
   OPTIONS(false);
 
   /** whether it supports a body. */

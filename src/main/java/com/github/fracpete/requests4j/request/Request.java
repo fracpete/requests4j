@@ -22,7 +22,7 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpDeleteWithBody;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpOptions;
@@ -889,7 +889,7 @@ public class Request
 	  request = new HttpPost(url.toURI());
 	  break;
 	case DELETE:
-	  request = new HttpDelete(url.toURI());
+	  request = new HttpDeleteWithBody(url.toURI());
 	  break;
 	case PUT:
 	  request = new HttpPut(url.toURI());
