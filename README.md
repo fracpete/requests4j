@@ -261,6 +261,37 @@ public class Redirect {
 ```
 
 
+### URLs
+The `URLBuilder` class (package `com.github.fracpete.requests4j.request`) is
+used by the `Request` class internally to construct the URL for `GET` requests.
+However, it can be used as standalone class as well to construct URLs, arguments 
+only or with protocol/port/file. It allows you to append simply key-value pairs, 
+keys with multiple values (String array or collection) and maps. The following code:
+
+```java
+import com.github.fracpete.requests4j.request.URLBuilder;
+public class BuildURL {
+  public static void main(String[] args) throws Exception {
+    Map pairs = new HashMap();
+    pairs.put("m", "m1");
+    URL url = new URL("http", "somehost.com", "/api");
+    URLBuilder builder = new URLBuilder(url)
+      .append("a", "a1")
+      .append("b", new String[]{"b1", "b2", "b3"})
+      .append("c", Arrays.asList("c1", "c2"))
+      .append(pairs);
+    System.out.println(builder.build());
+  }
+}
+```
+
+Will generate the following output:
+
+```
+http://somehost.com/api?a=a1&b=b1&b=b2&b=b3&c=c1&c=c2&m=m1
+```
+
+
 ## Examples
 
 * [ReadHtml](src/main/java/com/github/fracpete/requests4j/examples/ReadHtml.java) -- grabs the start

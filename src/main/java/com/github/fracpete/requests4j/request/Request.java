@@ -45,7 +45,6 @@ import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -812,11 +811,8 @@ public class Request
   protected URL assembleURL() throws Exception {
     URL 		result;
     Map<String,Object>	params;
-    StringBuilder	url;
-    int			i;
-    String		enc;
     Object		value;
-    List		list;
+    URLBuilder		builder;
 
     // collect parameters for URL
     params = new HashMap<>();
@@ -826,30 +822,15 @@ public class Request
     }
 
     if (params.size() > 0) {
-      enc = "UTF-8";
-      url = new StringBuilder(m_URL.toString());
-      i   = 0;
+      builder = new URLBuilder(m_URL);
       for (String key: params.keySet()) {
-        if (i == 0)
-          url.append("?");
-        else
-          url.append("&");
         value = params.get(key);
-        if (value instanceof List) {
-          list = (List) value;
-	}
-	else {
-          list = new ArrayList();
-          list.add(value);
-	}
-	for (Object item: list) {
-	  url.append(URLEncoder.encode(key, enc));
-	  url.append("=");
-	  url.append(URLEncoder.encode("" + item, enc));
-	  i++;
-	}
+        if (value instanceof List)
+          builder.append(key, (List) value);
+        else
+          builder.append(key, "" + value);
       }
-      result = new URL(url.toString());
+      result = new URL(builder.build());
     }
     else {
       result = m_URL;
