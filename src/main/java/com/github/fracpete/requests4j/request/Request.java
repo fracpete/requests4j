@@ -31,6 +31,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -172,6 +173,26 @@ public class Request
    */
   public Request url(String url) throws MalformedURLException {
     m_URL = new URL(url);
+    return this;
+  }
+
+  /**
+   * Sets the host/path to contact.
+   *
+   * @param host	the host (ie protocol, host, port)
+   * @param path 	the path (gets encoded correctly)
+   * @return		itself
+   * @throws MalformedURLException	if invalid URL
+   */
+  public Request url(String host, String path) throws MalformedURLException {
+    try {
+      m_URL = new URIBuilder(host)
+	.setPath(path)
+	.build().toURL();
+    }
+    catch (Exception e) {
+      throw new MalformedURLException("Invalid URI: " + host + "\n" + e);
+    }
     return this;
   }
 
