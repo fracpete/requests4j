@@ -22,7 +22,8 @@ The following sections describe how to use the library.
 
 ### Creating a request
 The following methods are supported through the `com.github.fracpete.requests4j.Requests` class:
-* GET -- `Requests.get()`
+* GET -- `Requests.get()` (also supports sending a payload, though this is not 
+  recommended by [RFC 7231, section 4.3.1](https://tools.ietf.org/html/rfc7231#section-4.3.1))
 * POST -- `Requests.post()`
 * PUT -- `Requests.put()`
 * PATCH -- `Requests.patch()`

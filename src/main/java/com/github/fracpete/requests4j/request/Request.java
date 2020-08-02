@@ -23,7 +23,7 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDeleteWithBody;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpGetWithBody;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPatch;
@@ -885,7 +885,7 @@ public class Request
     try {
       switch (m_Method) {
 	case GET:
-	  request = new HttpGet(url.toURI());
+	  request = new HttpGetWithBody(url.toURI());
 	  break;
 	case POST:
 	  request = new HttpPost(url.toURI());
