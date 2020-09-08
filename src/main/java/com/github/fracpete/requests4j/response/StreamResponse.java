@@ -1,11 +1,11 @@
 /*
  * StreamResponse.java
- * Copyright (C) 2019 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2019-2020 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.requests4j.response;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
+import com.github.fracpete.requests4j.request.Request;
 import org.apache.tika.io.IOUtils;
 
 import java.io.OutputStream;
@@ -70,18 +70,20 @@ public class StreamResponse
    * @param response		the response
    */
   @Override
-  public void init(CloseableHttpResponse response) {
+  public void init(okhttp3.Response response) {
     super.init(response);
 
-    try {
-      IOUtils.copy(response.getEntity().getContent(), m_OutputStream);
-    }
-    catch (Exception e) {
-      // TODO error message?
-    }
-    finally {
-      if (m_CloseOnFinish)
-        IOUtils.closeQuietly(m_OutputStream);
+    if (!Request.isRedirect(response.code())) {
+      try {
+        IOUtils.copy(response.body().byteStream(), m_OutputStream);
+      }
+      catch (Exception e) {
+        // TODO error message?
+      }
+      finally {
+        if (m_CloseOnFinish)
+          IOUtils.closeQuietly(m_OutputStream);
+      }
     }
   }
 

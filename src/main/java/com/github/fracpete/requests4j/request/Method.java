@@ -11,12 +11,12 @@ package com.github.fracpete.requests4j.request;
  * @author FracPete (fracpete at waikato dot ac dot nz)
  */
 public enum Method {
-  GET(true),
+  GET(false),
   POST(true),
   PUT(true),
   PATCH(true),
   HEAD(false),
-  DELETE(true),
+  DELETE(false),
   OPTIONS(false);
 
   /** whether it supports a body. */

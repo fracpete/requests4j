@@ -6,7 +6,7 @@
 package com.github.fracpete.requests4j.form;
 
 import com.github.fracpete.requests4j.core.Resendable;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
+import okhttp3.MultipartBody;
 
 import java.io.IOException;
 import java.util.Map;
@@ -48,7 +48,7 @@ public abstract class AbstractParameter
    * @param multipart   	the multipart to add the parameter to
    * @throws IOException	if writing fails
    */
-  public abstract void add(MultipartEntityBuilder multipart) throws IOException;
+  public abstract void add(MultipartBody.Builder multipart) throws IOException;
 
   /**
    * Collects the parameters.

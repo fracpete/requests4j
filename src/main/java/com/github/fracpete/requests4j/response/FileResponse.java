@@ -1,11 +1,11 @@
 /*
  * FileResponse.java
- * Copyright (C) 2019 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2019-2020 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.requests4j.response;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
+import com.github.fracpete.requests4j.request.Request;
 import org.apache.tika.io.IOUtils;
 
 import java.io.BufferedOutputStream;
@@ -73,28 +73,30 @@ public class FileResponse
    * @param response		the response
    */
   @Override
-  public void init(CloseableHttpResponse response) {
+  public void init(okhttp3.Response response) {
     FileOutputStream 		fos;
     BufferedOutputStream 	bos;
 
     super.init(response);
 
-    fos = null;
-    bos = null;
-    try {
-      fos = new FileOutputStream(m_OutputFile.getAbsolutePath());
-      if (m_BufferSize <= 0)
-	bos = new BufferedOutputStream(fos);
-      else
-	bos = new BufferedOutputStream(fos, m_BufferSize);
-      IOUtils.copy(response.getEntity().getContent(), bos);
-    }
-    catch (Exception e) {
-      // TODO error message?
-    }
-    finally {
-      IOUtils.closeQuietly(bos);
-      IOUtils.closeQuietly(fos);
+    if (!Request.isRedirect(response.code())) {
+      fos = null;
+      bos = null;
+      try {
+        fos = new FileOutputStream(m_OutputFile.getAbsolutePath());
+        if (m_BufferSize <= 0)
+          bos = new BufferedOutputStream(fos);
+        else
+          bos = new BufferedOutputStream(fos, m_BufferSize);
+        IOUtils.copy(response.body().byteStream(), bos);
+      }
+      catch (Exception e) {
+        // TODO error message?
+      }
+      finally {
+        IOUtils.closeQuietly(bos);
+        IOUtils.closeQuietly(fos);
+      }
     }
   }
 

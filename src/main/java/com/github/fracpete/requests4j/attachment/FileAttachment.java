@@ -5,9 +5,10 @@
 
 package com.github.fracpete.requests4j.attachment;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.FileEntity;
+import com.github.fracpete.requests4j.core.FileRequestBody;
+import com.github.fracpete.requests4j.core.MediaTypeHelper;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
 
 import java.io.File;
 
@@ -26,17 +27,17 @@ public class FileAttachment
   protected String m_Name;
 
   /** the content type. */
-  protected ContentType m_ContentType;
+  protected MediaType m_MediaType;
 
   /**
    * Initializes the file attachment.
-   * Uses {@link ContentType#APPLICATION_OCTET_STREAM} and file.getName()
+   * Uses application/octet-stream and file.getName()
    * as the file name in the request.
    *
    * @param file	the file to attach
    */
   public FileAttachment(File file) {
-    this(file, ContentType.APPLICATION_OCTET_STREAM);
+    this(file, MediaTypeHelper.OCTECT_STREAM);
   }
 
   /**
@@ -44,10 +45,10 @@ public class FileAttachment
    * Uses file.getName() as the file name in the request.
    *
    * @param file	the file to attach
-   * @param contentType	the content type of the file
+   * @param mediaType	the media type of the file
    */
-  public FileAttachment(File file, ContentType contentType) {
-    this(file, file.getName(), contentType);
+  public FileAttachment(File file, MediaType mediaType) {
+    this(file, file.getName(), mediaType);
   }
 
   /**
@@ -55,12 +56,12 @@ public class FileAttachment
    *
    * @param file	the file to attach
    * @param name 	the name to use in the request
-   * @param contentType	the content type of the file
+   * @param mediaType	the media type of the file
    */
-  public FileAttachment(File file, String name, ContentType contentType) {
+  public FileAttachment(File file, String name, MediaType mediaType) {
     m_File = file;
     m_Name = name;
-    m_ContentType = contentType;
+    m_MediaType = mediaType;
   }
 
   /**
@@ -92,12 +93,12 @@ public class FileAttachment
   }
 
   /**
-   * Returns the content type.
+   * Returns the media type.
    *
    * @return		the type
    */
-  public ContentType contentType() {
-    return m_ContentType;
+  public MediaType mediaType() {
+    return m_MediaType;
   }
 
   /**
@@ -109,7 +110,7 @@ public class FileAttachment
   public boolean isValid() {
     return (m_File != null) && (m_File.exists()) && (!m_File.isDirectory())
       && (m_Name != null)
-      && (m_ContentType != null);
+      && (m_MediaType != null);
   }
 
   /**
@@ -119,7 +120,7 @@ public class FileAttachment
    */
   @Override
   public String getContentDisposition() {
-    return "attachment; filename=" + m_Name;
+    return "attachment; name=\"file\"; filename=\"" + m_Name + "\"";
   }
 
   /**
@@ -128,8 +129,8 @@ public class FileAttachment
    * @return		the entity
    */
   @Override
-  public HttpEntity getEntity() {
-    return new FileEntity(m_File, m_ContentType);
+  public RequestBody getBody() {
+    return new FileRequestBody(m_MediaType, m_File.getAbsolutePath());
   }
 
   /**
@@ -139,6 +140,6 @@ public class FileAttachment
    */
   @Override
   public String toString() {
-    return "file=" + file() + ", name=" + name() + ", contentType=" + contentType();
+    return "file=" + file() + ", name=" + name() + ", mediaType=" + mediaType();
   }
 }

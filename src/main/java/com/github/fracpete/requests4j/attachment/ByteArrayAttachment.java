@@ -5,11 +5,10 @@
 
 package com.github.fracpete.requests4j.attachment;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.InputStreamEntity;
-
-import java.io.ByteArrayInputStream;
+import com.github.fracpete.requests4j.core.ByteArrayRequestBody;
+import com.github.fracpete.requests4j.core.MediaTypeHelper;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
 
 /**
  * Represents a byte-array attachment.
@@ -22,28 +21,28 @@ public class ByteArrayAttachment
   /** the content. */
   protected byte[] m_Content;
 
-  /** the content type. */
-  protected ContentType m_ContentType;
+  /** the media type. */
+  protected MediaType m_MediaType;
 
   /**
    * Initializes the attachment.
-   * Uses {@link ContentType#APPLICATION_OCTET_STREAM}.
+   * Uses application/octet-stream.
    *
    * @param content	the data to attach
    */
   public ByteArrayAttachment(byte[] content) {
-    this(content, ContentType.APPLICATION_OCTET_STREAM);
+    this(content, MediaTypeHelper.OCTECT_STREAM);
   }
 
   /**
    * Initializes the attachment.
    *
    * @param content	the data to attach
-   * @param contentType	the content type of the data
+   * @param mediaType	the media type of the data
    */
-  public ByteArrayAttachment(byte[] content, ContentType contentType) {
+  public ByteArrayAttachment(byte[] content, MediaType mediaType) {
     m_Content = content;
-    m_ContentType = contentType;
+    m_MediaType = mediaType;
   }
 
   /**
@@ -66,12 +65,12 @@ public class ByteArrayAttachment
   }
 
   /**
-   * Returns the content type.
+   * Returns the media type.
    *
    * @return		the type
    */
-  public ContentType contentType() {
-    return m_ContentType;
+  public MediaType mediaType() {
+    return m_MediaType;
   }
 
   /**
@@ -82,7 +81,7 @@ public class ByteArrayAttachment
   @Override
   public boolean isValid() {
     return (m_Content != null)
-      && (m_ContentType != null);
+      && (m_MediaType != null);
   }
 
   /**
@@ -101,8 +100,8 @@ public class ByteArrayAttachment
    * @return		the entity
    */
   @Override
-  public HttpEntity getEntity() {
-    return new InputStreamEntity(new ByteArrayInputStream(m_Content), m_Content.length);
+  public RequestBody getBody() {
+    return new ByteArrayRequestBody(m_MediaType, m_Content);
   }
 
   /**
@@ -112,6 +111,6 @@ public class ByteArrayAttachment
    */
   @Override
   public String toString() {
-    return "#bytes=" + (content() != null ? content().length : 0) + ", contentType=" + contentType();
+    return "#bytes=" + (content() != null ? content().length : 0) + ", mediaType=" + mediaType();
   }
 }

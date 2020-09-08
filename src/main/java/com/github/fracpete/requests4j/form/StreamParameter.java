@@ -5,12 +5,11 @@
 
 package com.github.fracpete.requests4j.form;
 
-import com.github.fracpete.requests4j.core.MimeTypeHelper;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.entity.mime.content.InputStreamBody;
-import org.apache.tika.mime.MediaType;
+import com.github.fracpete.requests4j.core.FileRequestBody;
+import com.github.fracpete.requests4j.core.MediaTypeHelper;
+import com.github.fracpete.requests4j.core.StreamRequestBody;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,8 +28,8 @@ public class StreamParameter
   /** the filename. */
   protected String m_Filename;
 
-  /** the mimetype. */
-  protected MediaType m_MimeType;
+  /** the media type. */
+  protected MediaType m_MediaType;
 
   /** the stream. */
   protected InputStream m_Stream;
@@ -42,7 +41,7 @@ public class StreamParameter
    * @param filename 	the filename
    */
   public StreamParameter(String name, String filename) {
-    this(name, filename, MimeTypeHelper.getMimeType(filename), null);
+    this(name, filename, MediaType.parse(MediaTypeHelper.getMediaType(filename).toString()), null);
   }
 
   /**
@@ -52,7 +51,7 @@ public class StreamParameter
    * @param file 	the file
    */
   public StreamParameter(String name, File file) {
-    this(name, file.getAbsolutePath(), MimeTypeHelper.getMimeType(file), null);
+    this(name, file.getAbsolutePath(), MediaType.parse(MediaTypeHelper.getMediaType(file).toString()), null);
   }
 
   /**
@@ -60,11 +59,11 @@ public class StreamParameter
    *
    * @param name 	the name
    * @param file 	the file
-   * @param mimeType 	the mimetype
+   * @param mediaType 	the media type
    * @param stream 	the stream, can be null, caller needs to close
    */
-  public StreamParameter(String name, File file, MediaType mimeType, InputStream stream) {
-    this(name, file.getAbsolutePath(), mimeType, stream);
+  public StreamParameter(String name, File file, MediaType mediaType, InputStream stream) {
+    this(name, file.getAbsolutePath(), mediaType, stream);
   }
 
   /**
@@ -72,14 +71,14 @@ public class StreamParameter
    *
    * @param name 	the name
    * @param filename 	the filename
-   * @param mimeType 	the mimetype
+   * @param mediaType 	the media type
    * @param stream 	the stream, can be null, caller needs to close
    */
-  public StreamParameter(String name, String filename, MediaType mimeType, InputStream stream) {
+  public StreamParameter(String name, String filename, MediaType mediaType, InputStream stream) {
     super(name);
-    m_Filename = filename;
-    m_MimeType = mimeType;
-    m_Stream   = stream;
+    m_Filename  = filename;
+    m_MediaType = mediaType;
+    m_Stream    = stream;
   }
 
   /**
@@ -102,12 +101,12 @@ public class StreamParameter
   }
 
   /**
-   * Returns the mimetype.
+   * Returns the media type.
    *
-   * @return		the mimetype
+   * @return		the media type
    */
-  public MediaType mimeType() {
-    return m_MimeType;
+  public MediaType mediaType() {
+    return m_MediaType;
   }
 
   /**
@@ -126,18 +125,11 @@ public class StreamParameter
    * @throws IOException	if writing fails
    */
   @Override
-  public void add(MultipartEntityBuilder multipart) throws IOException {
-    InputStreamBody 	streambody;
-    FileBody		filebody;
-
-    if (m_Stream != null) {
-      streambody = new InputStreamBody(m_Stream, ContentType.create(mimeType().toString()), new File(filename()).getName());
-      multipart.addPart(name(), streambody);
-    }
-    else {
-      filebody = new FileBody(new File(m_Filename), ContentType.create(mimeType().toString()));
-      multipart.addPart(name(), filebody);
-    }
+  public void add(MultipartBody.Builder multipart) throws IOException {
+    if (m_Stream != null)
+      multipart.addFormDataPart(name(), null, new StreamRequestBody(m_MediaType, stream()));
+    else
+      multipart.addFormDataPart(name(), null, new FileRequestBody(m_MediaType, filename()));
   }
 
   /**
@@ -156,6 +148,6 @@ public class StreamParameter
    */
   @Override
   public String toString() {
-    return name() + ", filename=" + filename() + ", mimetype=" + mimeType();
+    return name() + ", filename=" + filename() + ", media type=" + mediaType();
   }
 }

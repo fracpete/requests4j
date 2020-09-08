@@ -1,11 +1,9 @@
 /*
  * Response.java
- * Copyright (C) 2019 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2019-2020 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.requests4j.response;
-
-import org.apache.http.client.methods.CloseableHttpResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -22,14 +20,14 @@ public interface Response {
    *
    * @param response	the response
    */
-  public void init(CloseableHttpResponse response);
+  public void init(okhttp3.Response response);
 
   /**
    * Returns the underlying, raw response.
    *
    * @return		the response
    */
-  public CloseableHttpResponse rawResponse();
+  public okhttp3.Response rawResponse();
 
   /**
    * Returns the HTTP status code.

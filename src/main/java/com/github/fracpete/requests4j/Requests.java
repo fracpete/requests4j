@@ -37,17 +37,6 @@ public class Requests {
   /**
    * Instantiates a new GET request.
    *
-   * @param host	the host (ie protocol, host, port)
-   * @param path 	the path (gets encoded correctly)
-   * @return		the request
-   */
-  public static Request get(String host, String path) throws MalformedURLException {
-    return get().url(host, path);
-  }
-
-  /**
-   * Instantiates a new GET request.
-   *
    * @param url 	the URL to contact
    * @return		the request
    */
@@ -72,17 +61,6 @@ public class Requests {
    */
   public static Request post() {
     return new Request(POST);
-  }
-
-  /**
-   * Instantiates a new POST request.
-   *
-   * @param host	the host (ie protocol, host, port)
-   * @param path 	the path (gets encoded correctly)
-   * @return		the request
-   */
-  public static Request post(String host, String path) throws MalformedURLException {
-    return post().url(host, path);
   }
 
   /**
@@ -117,17 +95,6 @@ public class Requests {
   /**
    * Instantiates a new PUT request.
    *
-   * @param host	the host (ie protocol, host, port)
-   * @param path 	the path (gets encoded correctly)
-   * @return		the request
-   */
-  public static Request put(String host, String path) throws MalformedURLException {
-    return put().url(host, path);
-  }
-
-  /**
-   * Instantiates a new PUT request.
-   *
    * @param url 	the URL to contact
    * @return		the request
    */
@@ -152,17 +119,6 @@ public class Requests {
    */
   public static Request patch() {
     return new Request(PATCH);
-  }
-
-  /**
-   * Instantiates a new PATCH request.
-   *
-   * @param host	the host (ie protocol, host, port)
-   * @param path 	the path (gets encoded correctly)
-   * @return		the request
-   */
-  public static Request patch(String host, String path) throws MalformedURLException {
-    return patch().url(host, path);
   }
 
   /**
@@ -197,17 +153,6 @@ public class Requests {
   /**
    * Instantiates a new HEAD request.
    *
-   * @param host	the host (ie protocol, host, port)
-   * @param path 	the path (gets encoded correctly)
-   * @return		the request
-   */
-  public static Request head(String host, String path) throws MalformedURLException {
-    return head().url(host, path);
-  }
-
-  /**
-   * Instantiates a new HEAD request.
-   *
    * @param url 	the URL to contact
    * @return		the request
    */
@@ -237,17 +182,6 @@ public class Requests {
   /**
    * Instantiates a new OPTIONS request.
    *
-   * @param host	the host (ie protocol, host, port)
-   * @param path 	the path (gets encoded correctly)
-   * @return		the request
-   */
-  public static Request options(String host, String path) throws MalformedURLException {
-    return options().url(host, path);
-  }
-
-  /**
-   * Instantiates a new OPTIONS request.
-   *
    * @param url 	the URL to contact
    * @return		the request
    */
@@ -272,17 +206,6 @@ public class Requests {
    */
   public static Request delete() {
     return new Request(DELETE);
-  }
-
-  /**
-   * Instantiates a new DELETE request.
-   *
-   * @param host	the host (ie protocol, host, port)
-   * @param path 	the path (gets encoded correctly)
-   * @return		the request
-   */
-  public static Request delete(String host, String path) throws MalformedURLException {
-    return delete().url(host, path);
   }
 
   /**

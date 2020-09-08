@@ -1,13 +1,13 @@
 /*
  * BasicResponse.java
- * Copyright (C) 2019 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2019-2020 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.requests4j.response;
 
+import com.github.fracpete.requests4j.request.Request;
 import gnu.trove.list.TByteList;
 import gnu.trove.list.array.TByteArrayList;
-import org.apache.http.client.methods.CloseableHttpResponse;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,21 +41,23 @@ public class BasicResponse
    * @param response		the HTTP status code
    */
   @Override
-  public void init(CloseableHttpResponse response) {
+  public void init(okhttp3.Response response) {
     InputStream	in;
     int		b;
 
     super.init(response);
 
-    m_Body.clear();
-    if (response.getEntity() != null) {
-      try {
-	in = response.getEntity().getContent();
-	while ((b = in.read()) != -1)
-	  m_Body.add((byte) b);
-      }
-      catch (Exception e) {
-	System.err.println("Failed to read response body!");
+    if (!Request.isRedirect(response.code())) {
+      m_Body.clear();
+      if (response.body() != null) {
+        try {
+          in = response.body().byteStream();
+          while ((b = in.read()) != -1)
+            m_Body.add((byte) b);
+        }
+        catch (Exception e) {
+          System.err.println("Failed to read response body!");
+        }
       }
     }
   }

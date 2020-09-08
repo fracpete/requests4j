@@ -12,9 +12,13 @@ the [requests](https://2.python-requests.org/en/master/) API as model to make
 this library easy to use. 
 
 ## API Changes
-Version 0.1.0 swapped out the underlying code, now using 
-[Apache's HttpClient](http://hc.apache.org/httpcomponents-client-ga/) for doing 
-the actual work. 
+* Version 0.1.0 swapped out the underlying code, now using 
+  [Apache's HttpClient](http://hc.apache.org/httpcomponents-client-ga/) for doing 
+  the actual work.
+* Version 0.2.0 replaced [Apache's HttpClient](http://hc.apache.org/httpcomponents-client-ga/)
+  with [Square's OkHttp](https://square.github.io/okhttp/). This was unfortunately
+  necessary as Android ships with an outdated version of Apache's HttpClient, 
+  resulting in method signature errors.
 
 
 ## Usage
@@ -22,15 +26,13 @@ The following sections describe how to use the library.
 
 ### Creating a request
 The following methods are supported through the `com.github.fracpete.requests4j.Requests` class:
-* GET -- `Requests.get()` (also supports sending a payload, though this is not 
-  recommended by [RFC 7231, section 4.3.1](https://tools.ietf.org/html/rfc7231#section-4.3.1))
+* GET -- `Requests.get()`
 * POST -- `Requests.post()`
 * PUT -- `Requests.put()`
 * PATCH -- `Requests.patch()`
 * HEAD -- `Requests.head()`
 * OPTIONS -- `Requests.options()`
-* DELETE -- `Requests.delete()` (also supports sending a payload, though this is not 
-  recommended by [RFC 7231, section 4.3.5](https://tools.ietf.org/html/rfc7231#section-4.3.5))
+* DELETE -- `Requests.delete()`
 
 The above mentioned methods can also take a URL string or a `java.net.URL` object,
 initializing the URL straight away. Otherwise, you need to set the URL via 
@@ -101,7 +103,7 @@ method. Available attachment types (package `com.github.fracpete.requests4j.atta
 
 Such an attachment will add a `Content-Disposition` header to the request:
 * `ByteArrayAttachment`: `attachment`
-* `FileAttachment`: `attachment; filename=NAME`
+* `FileAttachment`: `attachment; name="file"; filename="NAME"`
 
 The following example posts the file supplied as command-line argument:
 
@@ -172,8 +174,7 @@ public class SessionExample {
     }
   }
 }
-
-``` 
+```
 
 
 ## Advanced usage
@@ -309,6 +310,6 @@ Use the following dependency in your `pom.xml`:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>requests4j</artifactId>
-      <version>0.1.9</version>
+      <version>0.2.0</version>
     </dependency>
 ```

@@ -6,7 +6,7 @@
 package com.github.fracpete.requests4j.attachment;
 
 import com.github.fracpete.requests4j.core.Resendable;
-import org.apache.http.HttpEntity;
+import okhttp3.RequestBody;
 
 import java.io.Serializable;
 
@@ -33,11 +33,11 @@ public abstract class AbstractAttachment
   public abstract String getContentDisposition();
 
   /**
-   * Returns the HTTP entity of the attachment.
+   * Returns the request body.
    *
-   * @return		the entity
+   * @return		the body
    */
-  public abstract HttpEntity getEntity();
+  public abstract RequestBody getBody();
 
   /**
    * Returns a short description.

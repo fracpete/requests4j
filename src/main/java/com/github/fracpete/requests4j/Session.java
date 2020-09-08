@@ -1,24 +1,25 @@
 /*
  * Session.java
- * Copyright (C) 2019 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2019-2020 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.requests4j;
 
-import com.github.fracpete.requests4j.request.Request;
-import com.github.fracpete.requests4j.response.Response;
+import com.github.fracpete.requests4j.auth.AbstractAuthentication;
+import com.github.fracpete.requests4j.auth.NoAuthentication;
 import com.github.fracpete.requests4j.event.RequestExecutionEvent;
 import com.github.fracpete.requests4j.event.RequestExecutionListener;
 import com.github.fracpete.requests4j.event.RequestFailureEvent;
 import com.github.fracpete.requests4j.event.RequestFailureListener;
-import org.apache.http.client.CookieStore;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import com.github.fracpete.requests4j.request.Request;
+import com.github.fracpete.requests4j.response.Response;
+import okhttp3.Authenticator;
+import okhttp3.JavaNetCookieJar;
+import okhttp3.OkHttpClient;
 
 import java.io.Serializable;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -32,13 +33,13 @@ public class Session
   implements Serializable, RequestExecutionListener, RequestFailureListener {
 
   /** the client. */
-  protected CloseableHttpClient m_Client;
+  protected OkHttpClient m_Client;
 
   /** the cookies. */
-  protected CookieStore m_Cookies;
+  protected CookieManager m_Cookies;
 
-  /** for storing credentials. */
-  protected CredentialsProvider m_Credentials;
+  /** for authentication. */
+  protected AbstractAuthentication m_Authentication;
 
   /**
    * Sets the cookies and adds itself as execution listener to the request.
@@ -49,7 +50,7 @@ public class Session
   protected Request process(Request request) {
     request.client(client());
     request.cookies(cookies());
-    request.credentials(credentials());
+    request.auth(auth());
     return request;
   }
 
@@ -82,12 +83,24 @@ public class Session
    *
    * @return		the client
    */
-  public synchronized CloseableHttpClient client() {
-    if (m_Client == null)
-      m_Client = HttpClients.custom()
-	.setDefaultCookieStore(cookies())
-	.setDefaultCredentialsProvider(credentials())
-	.build();
+  public synchronized OkHttpClient client() {
+    OkHttpClient.Builder	builder;
+    Authenticator		authenticator;
+
+    if (m_Client == null) {
+      builder = new OkHttpClient.Builder()
+        .cookieJar(new JavaNetCookieJar(cookies()));
+      try {
+	authenticator = auth().build();
+	if (authenticator != null)
+	  builder.authenticator(authenticator);
+      }
+      catch (Exception e) {
+        System.err.println("Failed to build/set authenticator!");
+        e.printStackTrace();
+      }
+      m_Client = builder.build();
+    }
     return m_Client;
   }
 
@@ -96,9 +109,11 @@ public class Session
    *
    * @return		the cookies
    */
-  public CookieStore cookies() {
-    if (m_Cookies == null)
-       m_Cookies = new BasicCookieStore();
+  public CookieManager cookies() {
+    if (m_Cookies == null) {
+      m_Cookies = new CookieManager();
+      m_Cookies.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+    }
     return m_Cookies;
   }
 
@@ -107,10 +122,10 @@ public class Session
    *
    * @return		the credentials
    */
-  public CredentialsProvider credentials() {
-    if (m_Credentials == null)
-      m_Credentials = new BasicCredentialsProvider();
-    return m_Credentials;
+  public AbstractAuthentication auth() {
+    if (m_Authentication == null)
+      m_Authentication = new NoAuthentication();
+    return m_Authentication;
   }
 
   /**
@@ -320,14 +335,6 @@ public class Session
    * Closes the client, if necessary.
    */
   public void close() {
-    if (m_Client != null) {
-      try {
-	m_Client.close();
-      }
-      catch (Exception e) {
-	// ignored
-      }
-    }
   }
 
   /**

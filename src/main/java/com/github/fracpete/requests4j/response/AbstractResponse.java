@@ -1,12 +1,9 @@
 /*
  * AbstractResponse.java
- * Copyright (C) 2019 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2019-2020 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.requests4j.response;
-
-import org.apache.http.Header;
-import org.apache.http.client.methods.CloseableHttpResponse;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -23,7 +20,7 @@ public class AbstractResponse
   implements Serializable, Response {
 
   /** the raw response. */
-  protected CloseableHttpResponse m_RawResponse;
+  protected okhttp3.Response m_RawResponse;
 
   /** the status code. */
   protected int m_StatusCode;
@@ -50,15 +47,15 @@ public class AbstractResponse
    * @param response		the response
    */
   @Override
-  public void init(CloseableHttpResponse response) {
+  public void init(okhttp3.Response response) {
     m_RawResponse   = response;
-    m_StatusCode    = response.getStatusLine().getStatusCode();
-    m_StatusMessage = response.getStatusLine().getReasonPhrase();
+    m_StatusCode    = response.code();
+    m_StatusMessage = response.message();
     m_Headers.clear();
-    for (Header header: response.getAllHeaders()) {
-      if (!m_Headers.containsKey(header.getName()))
-        m_Headers.put(header.getName(), new ArrayList<>());
-      m_Headers.get(header.getName()).add(header.getValue());
+    for (String header: response.headers().names()) {
+      if (!m_Headers.containsKey(header))
+        m_Headers.put(header, new ArrayList<>());
+      m_Headers.get(header).add(response.header(header));
     }
   }
 
@@ -68,7 +65,7 @@ public class AbstractResponse
    * @return		the response
    */
   @Override
-  public CloseableHttpResponse rawResponse() {
+  public okhttp3.Response rawResponse() {
     return m_RawResponse;
   }
 

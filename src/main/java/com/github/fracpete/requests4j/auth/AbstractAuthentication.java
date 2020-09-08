@@ -1,12 +1,11 @@
 /*
  * AbstractAuthentication.java
- * Copyright (C) 2019 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2019-2020 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.requests4j.auth;
 
-import com.github.fracpete.requests4j.request.Request;
-import org.apache.http.client.protocol.HttpClientContext;
+import okhttp3.Authenticator;
 
 import java.io.Serializable;
 
@@ -19,11 +18,10 @@ public abstract class AbstractAuthentication
   implements Serializable {
 
   /**
-   * Generates the context for the client.
+   * Generates the authenticator for the client.
    *
-   * @param request	the request to update
-   * @return 		the generated context
-   * @throws Exception  if context generation fails
+   * @return 		the generated authenticator
+   * @throws Exception  if generation fails
    */
-  public abstract HttpClientContext build(Request request) throws Exception;
+  public abstract Authenticator build() throws Exception;
 }

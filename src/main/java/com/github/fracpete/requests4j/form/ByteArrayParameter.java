@@ -5,12 +5,10 @@
 
 package com.github.fracpete.requests4j.form;
 
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.InputStreamBody;
-import org.apache.tika.mime.MediaType;
+import com.github.fracpete.requests4j.core.ByteArrayRequestBody;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Map;
 
@@ -25,8 +23,8 @@ public class ByteArrayParameter
   /** the filename. */
   protected String m_Filename;
 
-  /** the mimetype. */
-  protected MediaType m_MimeType;
+  /** the media type. */
+  protected MediaType m_MediaType;
 
   /** the data. */
   protected byte[] m_Data;
@@ -35,17 +33,17 @@ public class ByteArrayParameter
    * Initializes the parameter.
    *
    * @param name 	the name
-   * @param mimeType 	the mimetype
+   * @param mediaType 	the media type
    * @param data 	the data
    */
-  public ByteArrayParameter(String name, MediaType mimeType, byte[] data) {
+  public ByteArrayParameter(String name, MediaType mediaType, byte[] data) {
     super(name);
 
     if (data == null)
       throw new IllegalArgumentException("Byte array cannot be null!");
 
-    m_MimeType = mimeType;
-    m_Data     = data;
+    m_MediaType = mediaType;
+    m_Data      = data;
   }
 
   /**
@@ -59,12 +57,12 @@ public class ByteArrayParameter
   }
 
   /**
-   * Returns the mimetype.
+   * Returns the media type.
    *
-   * @return		the mimetype
+   * @return		the media type
    */
-  public MediaType mimeType() {
-    return m_MimeType;
+  public MediaType mediaType() {
+    return m_MediaType;
   }
 
   /**
@@ -83,11 +81,8 @@ public class ByteArrayParameter
    * @throws IOException	if writing fails
    */
   @Override
-  public void add(MultipartEntityBuilder multipart) throws IOException {
-    InputStreamBody 	streambody;
-
-    streambody = new InputStreamBody(new ByteArrayInputStream(m_Data), ContentType.create(mimeType().toString()));
-    multipart.addPart(name(), streambody);
+  public void add(MultipartBody.Builder multipart) throws IOException {
+    multipart.addFormDataPart(name(), null, new ByteArrayRequestBody(m_MediaType, m_Data));
   }
 
   /**
@@ -106,6 +101,6 @@ public class ByteArrayParameter
    */
   @Override
   public String toString() {
-    return name() + ", #bytes=" + data().length + ", mimetype=" + mimeType();
+    return name() + ", #bytes=" + data().length + ", mediatype=" + mediaType();
   }
 }

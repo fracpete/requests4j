@@ -5,9 +5,7 @@
 
 package com.github.fracpete.requests4j.form;
 
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.StringBody;
+import okhttp3.MultipartBody;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -63,8 +61,8 @@ public class StringParameter
    * @throws IOException	if writing fails
    */
   @Override
-  public void add(MultipartEntityBuilder multipart) throws IOException {
-    multipart.addPart(name(), new StringBody(value(), ContentType.MULTIPART_FORM_DATA));
+  public void add(MultipartBody.Builder multipart) throws IOException {
+    multipart.addFormDataPart(name(), value());
   }
 
   /**

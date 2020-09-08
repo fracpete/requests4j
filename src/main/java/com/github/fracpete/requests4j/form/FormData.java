@@ -1,15 +1,14 @@
 /*
  * FormData.java
- * Copyright (C) 2019 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2019-2020 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.requests4j.form;
 
 import com.github.fracpete.requests4j.core.Resendable;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.tika.mime.MediaType;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.Request;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,13 +108,13 @@ public class FormData
    *
    * @param name	the parameter name
    * @param file	the file name to use for the stream
-   * @param mimetype 	the mimetype to use, eg {@link MediaType#OCTET_STREAM}
+   * @param mediatype 	the media type to use
    * @param stream 	the stream to read from
    * @return		itself
    */
-  public FormData addStream(String name, File file, MediaType mimetype, InputStream stream) throws IOException {
+  public FormData addStream(String name, File file, MediaType mediatype, InputStream stream) throws IOException {
     m_Streams.add(stream);
-    return add(new StreamParameter(name, file, mimetype, stream));
+    return add(new StreamParameter(name, file, mediatype, stream));
   }
 
   /**
@@ -123,13 +122,13 @@ public class FormData
    *
    * @param name	the parameter name
    * @param filename	the file name to use for the stream
-   * @param mimetype 	the mimetype to use, eg {@link MediaType#OCTET_STREAM}
+   * @param mediatype 	the media type to use
    * @param stream 	the stream to read from
    * @return		itself
    */
-  public FormData addStream(String name, String filename, MediaType mimetype, InputStream stream) throws IOException {
+  public FormData addStream(String name, String filename, MediaType mediatype, InputStream stream) throws IOException {
     m_Streams.add(stream);
-    return add(new StreamParameter(name, filename, mimetype, stream));
+    return add(new StreamParameter(name, filename, mediatype, stream));
   }
 
   /**
@@ -138,15 +137,15 @@ public class FormData
    * @param post   		the request to add the form data to
    * @throws IOException	if writing fails
    */
-  public void add(HttpPost post) throws IOException {
-    MultipartEntityBuilder	builder;
+  public void add(Request.Builder post) throws IOException {
+    MultipartBody.Builder	builder;
 
     if (size() > 0) {
-      builder = MultipartEntityBuilder.create();
-      builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+      builder = new MultipartBody.Builder()
+        .setType(MultipartBody.FORM);
       for (String key : keySet())
 	get(key).add(builder);
-      post.setEntity(builder.build());
+      post.post(builder.build());
     }
   }
 
