@@ -21,7 +21,9 @@ import java.io.Serializable;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Session object for making requests, maintains client/cookies and adds them automatically
@@ -41,6 +43,176 @@ public class Session
   /** for authentication. */
   protected AbstractAuthentication m_Authentication;
 
+  /** the proxy to use. */
+  protected Proxy m_Proxy;
+
+  /** the read timeout. */
+  protected int m_ReadTimeout;
+
+  /** the connect timeout. */
+  protected int m_ConnectTimeout;
+
+  /** the write timeout. */
+  protected int m_WriteTimeout;
+
+  /** whether to allow redirects. */
+  protected boolean m_AllowRedirects;
+
+  /** the maximum number of redirects. */
+  protected int m_MaxRedirects;
+
+  /**
+   * Initializes the session with default values.
+   */
+  public Session() {
+    m_Client          = null;
+    m_Cookies         = null;
+    m_Proxy           = null;
+    m_ReadTimeout     = -1;
+    m_ConnectTimeout  = -1;
+    m_WriteTimeout    = -1;
+    m_AllowRedirects  = false;
+    m_MaxRedirects    = 3;
+  }
+
+  /**
+   * Sets the proxy to use.
+   *
+   * @param value	the proxy, null to unset proxy
+   * @return		itself
+   */
+  public Session proxy(Proxy value) {
+    m_Proxy = value;
+    return this;
+  }
+
+  /**
+   * Unsets the proxy in use.
+   *
+   * @return		itself
+   */
+  public Session noProxy() {
+    m_Proxy = null;
+    return this;
+  }
+
+  /**
+   * Returns the proxy, if any.
+   *
+   * @return		the proxy, null if none set
+   */
+  public Proxy proxy() {
+    return m_Proxy;
+  }
+
+  /**
+   * Sets the read timeout.
+   *
+   * @param value	the timeout in msec, use -1 for default
+   * @return		itself
+   */
+  public Session readTimeout(int value) {
+    if (value < 1)
+      value = -1;
+    m_ReadTimeout = value;
+    return this;
+  }
+
+  /**
+   * Returns the read timeout.
+   *
+   * @return		the timeout in msec, -1 for default
+   */
+  public int readTimeout() {
+    return m_ReadTimeout;
+  }
+
+  /**
+   * Sets the connect timeout.
+   *
+   * @param value	the timeout in msec, use -1 for default
+   * @return		itself
+   */
+  public Session connectTimeout(int value) {
+    if (value < 1)
+      value = -1;
+    m_ConnectTimeout = value;
+    return this;
+  }
+
+  /**
+   * Returns the connect timeout.
+   *
+   * @return		the timeout in msec, -1 for default
+   */
+  public int connectTimeout() {
+    return m_ConnectTimeout;
+  }
+
+  /**
+   * Sets the write timeout.
+   *
+   * @param value	the timeout in msec, use -1 for default
+   * @return		itself
+   */
+  public Session writeTimeout(int value) {
+    if (value < 1)
+      value = -1;
+    m_WriteTimeout = value;
+    return this;
+  }
+
+  /**
+   * Returns the write timeout.
+   *
+   * @return		the timeout in msec, -1 for default
+   */
+  public int writeTimeout() {
+    return m_WriteTimeout;
+  }
+
+  /**
+   * Returns whether to allow redirects (3xx).
+   *
+   * @param allow	true if to allow
+   * @return		itself
+   */
+  public Session allowRedirects(boolean allow) {
+    m_AllowRedirects = allow;
+    return this;
+  }
+
+  /**
+   * Returns whether redirects are allowed.
+   *
+   * @return		true if allowed
+   */
+  public boolean allowRedirects() {
+    return m_AllowRedirects;
+  }
+
+  /**
+   * Sets the maximum number of redirects to follow.
+   *
+   * @param max		the maximum
+   * @return		itself
+   */
+  public Session maxRedirects(int max) {
+    if (max < 0)
+      max = 0;
+    m_MaxRedirects = max;
+    return this;
+  }
+
+  /**
+   * Returns the maximum number of redirects to follow.
+   *
+   * @return		the maximum
+   */
+  public int maxRedirects() {
+    return m_MaxRedirects;
+  }
+
   /**
    * Sets the cookies and adds itself as execution listener to the request.
    *
@@ -51,6 +223,8 @@ public class Session
     request.client(client());
     request.cookies(cookies());
     request.auth(auth());
+    request.allowRedirects(allowRedirects());
+    request.maxRedirects(maxRedirects());
     return request;
   }
 
@@ -90,6 +264,14 @@ public class Session
     if (m_Client == null) {
       builder = new OkHttpClient.Builder()
         .cookieJar(new JavaNetCookieJar(cookies()));
+      if (m_ConnectTimeout != -1)
+        builder.connectTimeout(m_ConnectTimeout, TimeUnit.SECONDS);
+      if (m_ReadTimeout != -1)
+        builder.readTimeout(m_ReadTimeout, TimeUnit.SECONDS);
+      if (m_WriteTimeout != -1)
+        builder.writeTimeout(m_WriteTimeout, TimeUnit.SECONDS);
+      if (m_Proxy != null)
+        builder.proxy(m_Proxy);
       try {
 	authenticator = auth().build();
 	if (authenticator != null)
