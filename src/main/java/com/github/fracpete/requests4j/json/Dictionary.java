@@ -215,27 +215,4 @@ public class Dictionary
   public static Dictionary parse(String json) {
     return new Dictionary(json);
   }
-
-  public static void main(String[] args) throws Exception {
-    Dictionary d = newDict()
-        .add("a", 1)
-        .add("aa", 1.1)
-        .add("ab", 1L)
-        .add("ac", 1.0f)
-        .add("b", true)
-        .add("c", "yo")
-        .add("d", newDict()
-            .add("ba", "a"))
-        .add("f", newArray()
-            .add("a", "b", "c"))
-        .add("g", newArray()
-            .add(true, false, true, true))
-        .add("h", newArray()
-            .add(1.0, 2.1, 3.2))
-        .add("i", newArray()
-            .add(1.0f, 2.1f, 3.2f));
-    System.out.println(d.dump(2));
-    d = parse("{\"a\": 1, \"b\": true, \"c\": \"yo\"}");
-    System.out.println(d);
-  }
 }
