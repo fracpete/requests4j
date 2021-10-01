@@ -124,8 +124,6 @@ public class PostData {
 }
 ```
 
-
-
 ### Execute and response
 Once fully configured, you can execute a request with the `execute()` method,
 which will either fail with an exception or return a `BasicResponse` object (package 
@@ -143,6 +141,37 @@ With a `BasicResponse` object, you have access to:
 
 With the `saveBody` methods, you can save the binary response data as is to the 
 supplied file.
+
+
+### Json
+You can also send and receive Json quite easily. For that purpose, requests4j 
+offers the `Dictionary` and `Array` classes (package: `com.github.fracpete.requests4j.json`)
+to allow method chaining and easily construct request. These two classes have
+static methods, to shorten the instantiation:
+
+```java
+import com.github.fracpete.requests4j.Requests;
+import com.github.fracpete.requests4j.response.JsonResponse;
+import static com.github.fracpete.requests4j.json.Array.newArray;
+import static com.github.fracpete.requests4j.json.Dictionary.newDict;
+
+public class JsonPost {
+  public static void main(String[] args) throws Exception {
+    String url = "https://some.host.com/api/";
+    JsonResponse r = Requests.post(url)
+	  .body(newDict()
+	    .add("a", 1.234)
+	    .add("b", true)
+	    .add("c", newDict()
+		.add("z", 1.2f))
+	    .add("d", newArray()
+		.add(1, 2, 3, 4)))
+	.execute(new JsonResponse());
+    System.out.println(r.json());
+  }
+}
+```
+
 
 ## Sessions
 To avoid having to string along and update any cookies for requests, you can
@@ -302,6 +331,9 @@ http://somehost.com/api?a=a1&b=b1&b=b2&b=b3&c=c1&c=c2&m=m1
   a Weka zip file and streams the downloaded file straight to disk
 * [DownloadWekaAsStream](src/main/java/com/github/fracpete/requests4j/examples/DownloadWekaAsStream.java) -- downloads 
   a Weka zip file to a supplied output stream.
+* [WebHook](src/main/java/com/github/fracpete/requests4j/examples/Webhook.java) -- sends a POST request
+  to [https://webhook.site] and outputs the response. You need to supply the API key as first argument
+  (which you get by visiting the site).
  
 
 ## Maven

@@ -18,6 +18,9 @@ import com.github.fracpete.requests4j.event.RequestExecutionListener;
 import com.github.fracpete.requests4j.event.RequestFailureEvent;
 import com.github.fracpete.requests4j.event.RequestFailureListener;
 import com.github.fracpete.requests4j.form.FormData;
+import com.github.fracpete.requests4j.json.Array;
+import com.github.fracpete.requests4j.json.Dictionary;
+import com.github.fracpete.requests4j.json.Element;
 import com.github.fracpete.requests4j.response.BasicResponse;
 import com.github.fracpete.requests4j.response.Response;
 import okhttp3.Authenticator;
@@ -34,13 +37,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -460,6 +457,34 @@ public class Request
       throw new IllegalArgumentException("Method " + m_Method + " does not support a body!");
     m_Body = value;
     m_BodyMediaType = mediaType;
+    return this;
+  }
+
+  /**
+   * The JSON body to send.
+   *
+   * @param value	the body
+   * @return		itself
+   */
+  public Request body(Dictionary value) {
+    if (!m_Method.hasBody())
+      throw new IllegalArgumentException("Method " + m_Method + " does not support a body!");
+    m_Body = value.dump();
+    m_BodyMediaType = MediaTypeHelper.APPLICATION_JSON_UTF8;
+    return this;
+  }
+
+  /**
+   * The JSON body to send.
+   *
+   * @param value	the body
+   * @return		itself
+   */
+  public Request body(Array value) {
+    if (!m_Method.hasBody())
+      throw new IllegalArgumentException("Method " + m_Method + " does not support a body!");
+    m_Body = value.dump();
+    m_BodyMediaType = MediaTypeHelper.APPLICATION_JSON_UTF8;
     return this;
   }
 
