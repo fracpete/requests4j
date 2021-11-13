@@ -197,6 +197,27 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- generates dependency graphs, get pdfs/flows/sources -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.10</version>
+        <executions>
+          <!-- graph with all deps -->
+          <execution>
+            <id>tree-all</id>
+            <phase>package</phase>
+            <goals>
+              <goal>tree</goal>
+            </goals>
+            <configuration>
+              <outputType>graphml</outputType>
+              <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-all.graphml</outputFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>
