@@ -5,7 +5,7 @@
 
   <groupId>com.github.fracpete</groupId>
   <artifactId>requests4j</artifactId>
-  <version>0.2.4</version>
+  <version>0.2.5-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <parent>
@@ -89,7 +89,7 @@
     <connection>scm:git:ssh://git@github.com/fracpete/requests4j</connection>
     <developerConnection>scm:git:ssh://git@github.com/fracpete/requests4j</developerConnection>
     <url>https://github.com/fracpete/requests4j</url>
-    <tag>requests4j-0.2.4</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <dependencies>
