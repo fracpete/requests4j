@@ -334,6 +334,9 @@ http://somehost.com/api?a=a1&b=b1&b=b2&b=b3&c=c1&c=c2&m=m1
 * [WebHook](src/main/java/com/github/fracpete/requests4j/examples/Webhook.java) -- sends a POST request
   to [https://webhook.site] and outputs the response. You need to supply the API key as first argument
   (which you get by visiting the site).
+* [WebHookForm](/com/github/fracpete/requests4j/examples/WebhookForm.java) -- sends URL-encoded form data 
+  to [https://webhook.site] and outputs the response. You need to supply the API key as first argument
+  (which you get by visiting the site).
  
 
 ## Maven
