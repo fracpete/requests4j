@@ -102,13 +102,13 @@
     <dependency>
       <groupId>org.apache.tika</groupId>
       <artifactId>tika-core</artifactId>
-      <version>1.28.3</version>
+      <version>1.28.5</version>
     </dependency>
 
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>4.11.0</version>
+      <version>4.12.0</version>
       <scope>compile</scope>
     </dependency>
 
@@ -210,6 +210,19 @@
               <outputType>graphml</outputType>
               <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-all.graphml</outputFile>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.owasp</groupId>
+        <artifactId>dependency-check-maven</artifactId>
+        <version>9.0.8</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>
