@@ -345,6 +345,6 @@ Use the following dependency in your `pom.xml`:
     <dependency>
       <groupId>com.github.fracpete</groupId>
       <artifactId>requests4j</artifactId>
-      <version>0.2.5</version>
+      <version>0.2.6</version>
     </dependency>
 ```
