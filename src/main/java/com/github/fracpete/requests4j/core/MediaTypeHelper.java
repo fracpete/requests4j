@@ -1,12 +1,13 @@
 /*
  * MediaTypeHelper.java
- * Copyright (C) 2013-2020 University of Waikato, Hamilton, New Zealand
+ * Copyright (C) 2013-2024 University of Waikato, Hamilton, New Zealand
  */
 package com.github.fracpete.requests4j.core;
 
 import okhttp3.MediaType;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.AutoDetectParser;
 
 import java.io.BufferedInputStream;
@@ -64,7 +65,7 @@ public class MediaTypeHelper {
       parser   = new AutoDetectParser();
       detector = parser.getDetector();
       md       = new Metadata();
-      md.add(Metadata.RESOURCE_NAME_KEY, filename);
+      md.add(TikaCoreProperties.RESOURCE_NAME_KEY, filename);
       result = detector.detect(bis, md);
       bis.close();
       return MediaType.parse(result.toString());

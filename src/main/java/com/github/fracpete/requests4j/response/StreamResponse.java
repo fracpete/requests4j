@@ -1,12 +1,12 @@
 /*
  * StreamResponse.java
- * Copyright (C) 2019-2020 University of Waikato, Hamilton, NZ
+ * Copyright (C) 2019-2024 University of Waikato, Hamilton, NZ
  */
 
 package com.github.fracpete.requests4j.response;
 
 import com.github.fracpete.requests4j.request.Request;
-import org.apache.tika.io.IOUtils;
+import org.apache.commons.io.IOUtils;
 
 import java.io.OutputStream;
 
